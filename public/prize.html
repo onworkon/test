@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'">
+    <title>JSFes 상품 지급</title>
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/admin.css">
+  </head>
+  <body class="staff-shell prize-shell">
+    <span id="prizeState" class="sr-only">로그인 전</span>
+    <button id="prizeLogout" class="prize-logout" type="button" hidden>로그아웃</button>
+
+    <main id="prizeApp" class="app-container"></main>
+
+    <script src="/js/common.js"></script>
+    <script src="/js/prize.js"></script>
+  </body>
+</html>

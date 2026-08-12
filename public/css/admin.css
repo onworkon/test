@@ -1,0 +1,1370 @@
+.login-panel {
+  width: min(520px, 100%);
+  margin: 0 auto;
+}
+
+.form-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 0.72fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.code-panel {
+  display: grid;
+  gap: 10px;
+  text-align: center;
+}
+
+.totp-code {
+  display: block;
+  font-size: clamp(3rem, 11vw, 5.8rem);
+  line-height: 1;
+  font-weight: 800;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.status-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.inline-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+  align-items: end;
+}
+
+.small-button {
+  min-height: 34px;
+  padding: 0 10px;
+  font-size: 0.86rem;
+}
+
+.compact-table {
+  min-width: 440px;
+}
+
+.sentry-link {
+  color: var(--accent);
+  font-weight: 700;
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0 14px;
+  background: #fff;
+  text-decoration: none;
+}
+
+.log-list {
+  display: grid;
+  gap: 8px;
+}
+
+.check-list {
+  display: grid;
+  gap: 8px;
+}
+
+.check-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 10px;
+  background: #fff;
+}
+
+.check-item.pass {
+  border-color: #9fcfba;
+  background: #f0faf5;
+}
+
+.check-item.warn {
+  border-color: #edc27b;
+  background: #fff8ed;
+}
+
+.check-item.fail {
+  border-color: #df9a9a;
+  background: #fff1f1;
+}
+
+.check-item span {
+  color: var(--muted);
+  font-size: 0.84rem;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.log-item {
+  display: grid;
+  gap: 2px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 10px;
+  background: #fff;
+}
+
+.log-item span {
+  color: var(--muted);
+  font-size: 0.84rem;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 820px) {
+  .admin-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .status-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .login-panel {
+    margin-top: 8px;
+  }
+
+  .admin-grid {
+    display: grid;
+  }
+
+  .form-grid {
+    gap: 10px;
+  }
+
+  .code-panel {
+    text-align: left;
+  }
+
+  .totp-code {
+    font-size: clamp(3rem, 22vw, 4.6rem);
+    text-align: center;
+  }
+
+  .status-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .status-actions button {
+    min-height: 48px;
+    padding: 0 8px;
+    font-size: 0.9rem;
+    line-height: 1.2;
+  }
+
+  .inline-form {
+    grid-template-columns: 1fr;
+  }
+
+  .compact-table {
+    min-width: 360px;
+  }
+
+  .check-item {
+    display: grid;
+    gap: 4px;
+    align-items: start;
+  }
+
+  .check-item span {
+    text-align: left;
+  }
+
+  .log-item {
+    padding: 9px;
+  }
+}
+
+@media (max-width: 420px) {
+  .status-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .small-button {
+    min-height: 38px;
+  }
+
+  .compact-table {
+    min-width: 320px;
+  }
+}
+
+.staff-shell {
+  min-width: 320px;
+  background: #f5f5f5;
+  scrollbar-width: none;
+}
+
+.staff-shell::-webkit-scrollbar {
+  display: none;
+}
+
+.staff-login-mode {
+  min-height: 812px;
+  overflow-x: hidden;
+}
+
+.staff-login-mode > .topbar {
+  display: none;
+}
+
+.staff-login-mode > .app-container {
+  width: min(375px, 100%);
+  min-height: 812px;
+  margin: 0 auto;
+}
+
+.staff-password-screen,
+.manager-select-screen {
+  position: relative;
+  width: min(375px, 100%);
+  min-height: 812px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+.staff-login-card {
+  position: absolute;
+  top: min(400px, calc(50vh - 6px));
+  left: calc(50% - 140px);
+  width: 280px;
+  height: 225px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #141832;
+  color: #fff;
+}
+
+.staff-login-card::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px solid #fff;
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.staff-login-symbol {
+  position: absolute;
+  top: 29px;
+  left: 128px;
+  width: 24px;
+  height: 24px;
+  display: block;
+  object-fit: contain;
+}
+
+.staff-login-heading {
+  position: absolute;
+  top: 65px;
+  left: 40px;
+  width: 204px;
+  height: 35px;
+  text-align: center;
+}
+
+.staff-login-heading h1 {
+  height: 18px;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.staff-login-heading p {
+  height: 18px;
+  margin: 0;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 8px;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.staff-password-form {
+  position: absolute;
+  top: 118px;
+  left: 32px;
+  width: 220px;
+  height: 77px;
+}
+
+.staff-password-form input:not([type="hidden"]),
+.staff-password-form button {
+  position: absolute;
+  left: 0;
+  width: 216px;
+  height: 35px;
+  min-height: 35px;
+  border: 1px solid #fff;
+  border-radius: 12px;
+}
+
+.staff-password-form input:not([type="hidden"]) {
+  top: 0;
+  padding: 0 12px;
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+  font-size: 10px;
+}
+
+.staff-password-form input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.staff-password-form button {
+  top: 42px;
+  background: #fff;
+  color: rgba(0, 0, 0, 0.5);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.staff-password-form button:hover {
+  background: #fff;
+}
+
+.staff-login-message {
+  position: absolute;
+  top: 198px;
+  left: 32px;
+  width: 216px;
+  min-height: 18px;
+  margin: 0;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 9px;
+  line-height: 18px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.staff-login-message.error {
+  color: #ffd1d1;
+}
+
+.staff-login-toast {
+  position: absolute;
+  bottom: 48px;
+  left: 50%;
+  z-index: 20;
+  width: min(300px, calc(100% - 32px));
+  min-height: 40px;
+  margin: 0;
+  padding: 10px 14px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(20, 24, 50, 0.94);
+  box-shadow: 0 8px 18px rgba(20, 24, 50, 0.18);
+  color: #fff;
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+  transform: translateX(-50%);
+}
+
+.staff-login-toast.error {
+  background: rgba(168, 50, 50, 0.96);
+  color: #fff;
+}
+
+.staff-login-toast.success {
+  background: rgba(40, 50, 100, 0.96);
+  color: #fff;
+}
+
+.staff-footer {
+  position: absolute;
+  top: 646px;
+  left: calc(50% - 87px);
+  width: 174px;
+  height: 18px;
+  color: #283264;
+  font-size: 10px;
+  line-height: 18px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.staff-footer a {
+  color: #283264;
+}
+
+.staff-back-button {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 2;
+  min-height: 34px;
+  padding: 0 10px;
+  border-color: rgba(40, 50, 100, 0.3);
+  background: #fff;
+  color: #283264;
+  font-size: 11px;
+}
+
+.staff-festival-brand {
+  position: absolute;
+  top: 53px;
+  left: calc(50% - 58px);
+  width: 116px;
+  height: 32px;
+  padding-top: 24px;
+  color: #141932;
+  font-family: "Yang Organization Gothic", "A2Z", sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 12px;
+  letter-spacing: 0;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.manager-select-screen {
+  min-height: max(812px, calc(145px + (var(--booth-count, 5) * 130px)));
+  overflow: visible;
+}
+
+.manager-booth-list {
+  position: absolute;
+  top: 145px;
+  left: calc(50% - 150px);
+  width: 300px;
+  display: grid;
+  gap: 10px;
+}
+
+.manager-booth-card {
+  position: relative;
+  width: 300px;
+  height: 120px;
+  min-height: 120px;
+  padding: 0;
+  border: 1.5px solid #283264;
+  border-radius: 8px;
+  background: #fff;
+  color: rgba(0, 0, 0, 0.5);
+  text-align: left;
+}
+
+.manager-booth-card:hover {
+  background: #fff;
+}
+
+.manager-booth-status {
+  position: absolute;
+  top: 13px;
+  right: 10px;
+  width: 50px;
+  height: 24px;
+  display: grid;
+  min-height: 0;
+  place-items: center;
+  border: var(--status-outline-width) solid var(--status-outline);
+  border-radius: 4px;
+  background: var(--status-open-fill);
+  color: #fff;
+  font-size: 10px;
+}
+
+.manager-booth-status.status-soldout {
+  background: var(--status-soldout-fill);
+  color: var(--status-outline);
+}
+
+.manager-booth-status.status-closed {
+  background: var(--status-closed-fill);
+  color: var(--status-outline);
+}
+
+.manager-booth-title {
+  position: absolute;
+  top: 18px;
+  left: 21px;
+  width: 190px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.manager-booth-title strong {
+  max-width: 118px;
+  overflow: hidden;
+  color: rgba(0, 0, 0, 0.55);
+  font-size: 14px;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.manager-booth-title em {
+  overflow: hidden;
+  color: rgba(0, 0, 0, 0.35);
+  font-size: 12px;
+  font-style: normal;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.manager-booth-card small {
+  position: absolute;
+  top: 42px;
+  left: 10px;
+  width: 280px;
+  height: 60px;
+  padding: 12px 10px;
+  overflow: hidden;
+  border: 1.5px solid rgba(40, 50, 100, 0.5);
+  border-radius: 4px;
+  color: rgba(40, 50, 100, 0.5);
+  font-size: 10px;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.staff-list-message {
+  position: absolute;
+  top: 112px;
+  left: 36px;
+  width: 303px;
+  font-size: 11px;
+}
+
+.manager-shell:not(.staff-login-mode) .app-container {
+  width: min(680px, calc(100% - 20px));
+}
+
+.manager-shell:not(.staff-login-mode) .admin-grid {
+  gap: 12px;
+}
+
+.manager-shell:not(.staff-login-mode) .panel {
+  border: 1.5px solid #283264;
+  box-shadow: none;
+}
+
+.manager-dashboard-mode {
+  min-height: 812px;
+  overflow-x: hidden;
+}
+
+.manager-dashboard-mode > .topbar {
+  display: none;
+}
+
+.manager-shell.manager-dashboard-mode > .app-container {
+  width: min(375px, 100%);
+  min-height: 812px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+.manager-dashboard {
+  position: relative;
+  width: 100%;
+  min-width: 375px;
+  min-height: 812px;
+  overflow-y: auto;
+  background: #f5f5f5;
+  color: #141932;
+}
+
+.manager-dashboard-brand {
+  position: absolute;
+  top: 53px;
+  left: 50%;
+  width: 116px;
+  height: 32px;
+  transform: translateX(-50%);
+}
+
+.manager-dashboard-brand h1 {
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  width: max-content;
+  margin: 0;
+  color: #141932;
+  font-family: "Yang Organization Gothic", "A2Z", sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 12px;
+  letter-spacing: -0.96px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.manager-dashboard-tools {
+  position: absolute;
+  top: 112px;
+  right: max(18px, calc(50% - 170px));
+  display: flex;
+  gap: 10px;
+}
+
+.manager-dashboard-tools button {
+  width: auto;
+  min-height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: rgba(40, 50, 100, 0.6);
+  font-size: 10px;
+  line-height: 18px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.manager-dashboard-tools button:hover {
+  background: transparent;
+  color: #283264;
+}
+
+.manager-login-status {
+  position: absolute;
+  top: 154px;
+  left: 0;
+  display: flex;
+  width: 100%;
+  height: 40px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  color: #141932;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 20px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.manager-code-card {
+  position: absolute;
+  top: 210px;
+  left: 50%;
+  width: 300px;
+  height: 120px;
+  border: 1.5px solid #283264;
+  border-radius: 8px;
+  background: #fff;
+  transform: translateX(-50%);
+}
+
+.manager-code-card h2 {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  height: 12px;
+  margin: 0;
+  color: rgba(20, 25, 50, 0.5);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 12px;
+  white-space: nowrap;
+}
+
+.manager-code-card output {
+  position: absolute;
+  top: 42px;
+  left: 70px;
+  color: #141932;
+  font-size: 36px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 3.6px;
+  line-height: 36px;
+  white-space: nowrap;
+}
+
+.manager-code-card p {
+  position: absolute;
+  top: 88px;
+  left: 0;
+  width: 100%;
+  height: 12px;
+  margin: 0;
+  color: rgba(20, 25, 50, 0.5);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 12px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.manager-code-refresh {
+  position: absolute;
+  top: 14.667px;
+  left: 265.167px;
+  width: 18px;
+  height: 24px;
+  min-height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.manager-code-refresh:hover {
+  background: transparent;
+}
+
+.manager-code-refresh img {
+  display: block;
+  width: 18px;
+  height: 24px;
+  margin: 0 auto;
+}
+
+.manager-dashboard-divider {
+  position: absolute;
+  top: 360px;
+  left: 50%;
+  width: min(360px, calc(100% - 16px));
+  height: 1px;
+  background: rgba(40, 50, 100, 0.5);
+  transform: translateX(-50%);
+}
+
+.manager-edit-heading {
+  position: absolute;
+  top: 400px;
+  left: max(18px, calc(50% - 131.5px));
+  height: 12px;
+  margin: 0;
+  color: #141932;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 12px;
+  white-space: nowrap;
+}
+
+.manager-booth-form {
+  position: absolute;
+  top: 420px;
+  left: 50%;
+  width: 300px;
+  height: 240px;
+  border: 1.5px solid #283264;
+  border-radius: 8px;
+  background: #fff;
+  transform: translateX(-50%);
+}
+
+.manager-booth-name {
+  position: absolute;
+  top: 30px;
+  left: 30px;
+  width: 180px;
+  height: 16px;
+  margin: 0;
+  color: rgba(0, 0, 0, 0.5);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 16px;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.manager-booth-location {
+  position: absolute;
+  top: 50px;
+  left: 30px;
+  width: 180px;
+  height: 27px;
+  margin: 0;
+  color: rgba(0, 0, 0, 0.25);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.manager-status-toggle {
+  position: absolute;
+  top: 30px;
+  right: 18px;
+  width: 62px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0 4px;
+  border: var(--status-outline-width) solid var(--status-outline);
+  border-radius: 4px;
+  background: var(--status-open-fill);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.manager-status-toggle:hover {
+  box-shadow: 0 0 0 2px rgba(20, 25, 50, 0.12);
+}
+
+.manager-status-toggle[data-status="soldout"] {
+  background: var(--status-soldout-fill);
+  color: var(--status-outline);
+}
+
+.manager-status-toggle[data-status="closed"] {
+  background: var(--status-closed-fill);
+  color: var(--status-outline);
+}
+
+.manager-description-field {
+  position: absolute;
+  top: 90px;
+  left: 15px;
+  box-sizing: border-box;
+  width: 270px;
+  height: 80px;
+  border: 1.5px solid rgba(40, 50, 100, 0.5);
+  border-radius: 4px;
+  background: #fff;
+}
+
+.manager-description-field textarea {
+  position: absolute;
+  top: 7.334px;
+  left: 12.84px;
+  box-sizing: border-box;
+  width: 240px;
+  height: 60px;
+  min-height: 60px;
+  padding: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #000;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  opacity: 0.5;
+  text-align: left;
+  resize: none;
+  white-space: pre-wrap;
+}
+
+.manager-description-field textarea.is-editing {
+  opacity: 1;
+}
+
+.manager-description-field textarea[readonly] {
+  cursor: default;
+}
+
+.manager-description-field textarea:focus {
+  outline: 0;
+}
+
+.manager-description-edit {
+  position: absolute;
+  top: 140.667px;
+  left: 256.167px;
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.manager-description-edit:hover {
+  background: transparent;
+}
+
+.manager-description-edit img {
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+
+.manager-save-button {
+  position: absolute;
+  top: 184px;
+  left: 96px;
+  width: 110px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.manager-save-button:hover {
+  background: transparent;
+}
+
+.manager-save-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.manager-save-button-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 108px;
+  height: 40px;
+  border-radius: 4px;
+  background: #141932;
+}
+
+.manager-save-button-label {
+  position: absolute;
+  top: 12px;
+  left: 19px;
+  height: 16px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.prize-shell:not(.staff-login-mode) {
+  min-height: 812px;
+  overflow-x: hidden;
+}
+
+.prize-shell:not(.staff-login-mode) > .app-container {
+  width: min(375px, 100%);
+  min-height: 812px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+.prize-dashboard {
+  position: relative;
+  width: 100%;
+  min-height: 812px;
+  overflow: hidden;
+}
+
+.prize-festival-brand {
+  margin: 0;
+}
+
+.prize-logout {
+  position: fixed;
+  top: 12px;
+  right: max(12px, calc(50% - 175px));
+  z-index: 10;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid rgba(40, 50, 100, 0.35);
+  background: #fff;
+  color: #283264;
+  font-size: 10px;
+}
+
+.staff-login-mode > .prize-logout {
+  display: none;
+}
+
+.prize-lookup-form {
+  position: absolute;
+  top: 210px;
+  left: 62px;
+  width: 252px;
+  height: 48px;
+  display: grid;
+  grid-template-columns: 180px 60px;
+  gap: 12px;
+}
+
+.prize-lookup-form input,
+.prize-lookup-form button {
+  height: 48px;
+  min-height: 48px;
+  border: 1.5px solid #141932;
+  border-radius: 8px;
+}
+
+.prize-lookup-form input {
+  min-width: 0;
+  padding: 0 8px;
+  background: #fff;
+  color: #141932;
+  font-size: 10px;
+  text-align: center;
+}
+
+.prize-lookup-form input::placeholder {
+  color: rgba(20, 25, 50, 0.45);
+}
+
+.prize-lookup-form button {
+  padding: 0;
+  background: #141932;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+}
+
+.prize-result-card {
+  position: absolute;
+  top: 280px;
+  left: calc(50% - 140px);
+  width: 280px;
+  height: 180px;
+  border: 1.5px solid #141932;
+  border-radius: 8px;
+  background: #fff;
+  color: #141932;
+}
+
+.prize-result-card h2 {
+  position: absolute;
+  top: 24px;
+  left: 110px;
+  width: 60px;
+  height: 30px;
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 18px;
+  text-align: center;
+}
+
+.prize-result-divider {
+  position: absolute;
+  top: 73px;
+  left: 14px;
+  width: 252px;
+  height: 2px;
+  background: #141932;
+}
+
+.prize-result-card dl {
+  position: absolute;
+  top: 96px;
+  left: 22px;
+  width: 236px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 36px;
+}
+
+.prize-result-card dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.prize-result-card dt,
+.prize-result-card dd {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.prize-result-card dd {
+  color: rgba(20, 25, 50, 0.55);
+  font-weight: 700;
+}
+
+.prize-result-card dd.available {
+  color: #283264;
+}
+
+.prize-offline-confirm {
+  position: absolute;
+  top: 470px;
+  left: calc(50% - 89px);
+  width: 179px;
+  height: 36px;
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 8px;
+  align-items: center;
+  color: #141932;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.prize-offline-confirm input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+}
+
+.prize-checkbox {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  border: 1.5px solid #141932;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.prize-offline-confirm input:checked + .prize-checkbox {
+  background: #141932;
+}
+
+.prize-offline-confirm input:checked + .prize-checkbox::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  left: 9px;
+  width: 7px;
+  height: 12px;
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  transform: rotate(45deg);
+}
+
+.prize-offline-confirm input:focus-visible + .prize-checkbox {
+  outline: 3px solid rgba(40, 50, 100, 0.28);
+  outline-offset: 2px;
+}
+
+.prize-offline-confirm:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.prize-action-button {
+  position: absolute;
+  top: 526px;
+  left: calc(50% - 61px);
+  width: 120px;
+  height: 48px;
+  min-height: 48px;
+  padding: 0;
+  border: 1.5px solid #141932;
+  border-radius: 8px;
+  background: #141932;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.prize-action-button:disabled {
+  opacity: 0.45;
+}
+
+.prize-message {
+  position: absolute;
+  top: 584px;
+  left: calc(50% - 150px);
+  width: 300px;
+  min-height: 18px;
+  margin: 0;
+  color: rgba(20, 25, 50, 0.65);
+  font-size: 10px;
+  line-height: 18px;
+  text-align: center;
+}
+
+.prize-message.error {
+  color: #a72f2f;
+}
+
+.prize-message.success {
+  color: #1f7049;
+}
+
+.prize-confirm-dialog {
+  width: 280px;
+  height: 210px;
+  max-width: calc(100% - 24px);
+  max-height: calc(100% - 24px);
+  padding: 0;
+  border: 0;
+  overflow: visible;
+  background: transparent;
+  color: #141932;
+}
+
+.prize-confirm-dialog::backdrop {
+  background: rgba(20, 25, 50, 0.3);
+}
+
+.prize-confirm-card {
+  position: relative;
+  width: 280px;
+  height: 210px;
+  max-width: 100%;
+  border: 1.5px solid #283264;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.prize-confirm-card h2 {
+  position: absolute;
+  top: 36px;
+  left: 50px;
+  width: 180px;
+  height: 18px;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.prize-confirm-card p {
+  position: absolute;
+  top: 79px;
+  left: 54px;
+  width: 172px;
+  height: 36px;
+  margin: 0;
+  color: rgba(20, 25, 50, 0.65);
+  font-size: 12px;
+  line-height: 18px;
+  text-align: center;
+}
+
+.prize-confirm-button {
+  position: absolute;
+  top: 148px;
+  left: 99px;
+  width: 82px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0;
+  border: 1.5px solid #141932;
+  border-radius: 8px;
+  background: #141932;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.prize-confirm-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 20px;
+  height: 20px;
+  min-height: 20px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.prize-confirm-close::before,
+.prize-confirm-close::after {
+  content: "";
+  position: absolute;
+  top: 9px;
+  left: 3px;
+  width: 14px;
+  height: 1.5px;
+  background: #141932;
+}
+
+.prize-confirm-close::before {
+  transform: rotate(45deg);
+}
+
+.prize-confirm-close::after {
+  transform: rotate(-45deg);
+}
+
+@media (max-width: 620px) {
+  .manager-shell:not(.staff-login-mode) .app-container,
+  .admin-shell:not(.staff-login-mode) .app-container {
+    width: min(100% - 20px, 520px);
+  }
+
+  .manager-shell:not(.staff-login-mode) .topbar,
+  .admin-shell:not(.staff-login-mode) .topbar {
+    border-bottom-color: #283264;
+  }
+
+  .admin-shell:not(.staff-login-mode) .panel,
+  .manager-shell:not(.staff-login-mode) .panel {
+    border-color: rgba(40, 50, 100, 0.45);
+    box-shadow: none;
+  }
+}
+
+@media (max-width: 374px) {
+  .staff-login-card {
+    left: 12px;
+    width: calc(100% - 24px);
+  }
+
+  .manager-booth-list {
+    left: 12px;
+    width: calc(100% - 24px);
+  }
+
+  .manager-booth-card {
+    width: 100%;
+  }
+
+  .manager-booth-card small {
+    width: calc(100% - 20px);
+  }
+
+  .prize-lookup-form {
+    left: 20px;
+    width: calc(100% - 40px);
+    grid-template-columns: minmax(0, 1fr) 60px;
+  }
+
+  .prize-result-card,
+  .prize-message {
+    left: 20px;
+    width: calc(100% - 40px);
+  }
+
+  .prize-result-card h2 {
+    left: 20px;
+    width: calc(100% - 40px);
+  }
+
+  .prize-result-divider {
+    left: 15px;
+    width: calc(100% - 30px);
+  }
+
+  .prize-result-card dl {
+    left: 20px;
+    width: calc(100% - 40px);
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "name": "jsfes-nfc",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Festival booth stamp management site for JSFes.",
+  "scripts": {
+    "assets:sync": "node scripts/sync-source-assets.js",
+    "predev": "npm run assets:sync",
+    "dev": "node scripts/local-dev.js",
+    "vercel:dev": "npx vercel dev",
+    "check": "node scripts/check-syntax.js",
+    "pretest": "npm run assets:sync",
+    "test": "npm run check && npm run test:core && npm run test:http && npm run smoke",
+    "test:core": "node scripts/test-core.js",
+    "test:http": "node scripts/test-http.js",
+    "smoke": "node scripts/smoke-local.js",
+    "db:migrate": "node scripts/migrate.js",
+    "db:schema": "node scripts/run-sql.js db/schema.sql",
+    "db:seed": "node scripts/run-sql.js db/seed.example.sql",
+    "db:check": "node scripts/check-db.js",
+    "ops:check": "node scripts/check-readiness.js",
+    "export:csv": "node scripts/export-csv.js",
+    "hash-password": "node scripts/hash-password.js",
+    "staff:upsert": "node scripts/upsert-staff.js",
+    "tag:upsert": "node scripts/upsert-tag.js",
+    "booths:sync": "node scripts/sync-booths.js",
+    "vercel-build": "npm run check"
+  },
+  "dependencies": {
+    "@sentry/node": "^10.69.0",
+    "bcryptjs": "^3.0.3",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.12.0",
+    "speakeasy": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

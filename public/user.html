@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'">
+    <title>JSFes Stamp</title>
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/user.css">
+  </head>
+  <body class="user-shell">
+    <header class="topbar">
+      <div>
+        <strong class="brand">JSFes Stamp</strong>
+        <span id="authState" class="auth-state">로그인 전</span>
+      </div>
+      <button id="logoutButton" class="ghost-button" type="button" hidden>로그아웃</button>
+    </header>
+
+    <nav class="route-nav" aria-label="사용자 메뉴">
+      <button type="button" data-route="/start">시작</button>
+      <button type="button" data-route="/map">지도</button>
+      <button type="button" data-route="/stamp">스탬프</button>
+      <button type="button" data-route="/reward">상품</button>
+      <button type="button" data-route="/schedule">일정</button>
+    </nav>
+
+    <main id="app" class="app-container" tabindex="-1"></main>
+
+    <dialog id="boothDialog" class="booth-dialog"></dialog>
+
+    <script src="/js/common.js"></script>
+    <script src="/js/user.js"></script>
+  </body>
+</html>

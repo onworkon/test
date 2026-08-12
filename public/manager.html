@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'">
+    <title>JSFes 부장 페이지</title>
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/admin.css">
+  </head>
+  <body class="staff-shell manager-shell">
+    <header class="topbar">
+      <div>
+        <strong class="brand">부장 페이지</strong>
+        <span id="managerState" class="auth-state">로그인 전</span>
+      </div>
+      <button id="managerLogout" class="ghost-button" type="button" hidden>로그아웃</button>
+    </header>
+
+    <main id="managerApp" class="app-container"></main>
+
+    <script src="/js/common.js"></script>
+    <script src="/js/manager.js"></script>
+  </body>
+</html>

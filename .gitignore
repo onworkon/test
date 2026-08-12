@@ -1,0 +1,11 @@
+node_modules/
+.vercel/
+.env
+.env.local
+npm-debug.log*
+exports/
+*.log
+/*.png
+
+.vercel
+.env*.local

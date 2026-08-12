@@ -1,0 +1,45 @@
+const crypto = require('crypto');
+const { signToken } = require('../_auth');
+const { getPrizePassword } = require('../_config');
+const { allowMethods, readJson, sendJson, sendError, handleApiError } = require('../_http');
+const { checkDbRateLimit } = require('../_rate_limit');
+
+function safePasswordMatch(submitted, expected) {
+  const submittedBuffer = Buffer.from(String(submitted), 'utf8');
+  const expectedBuffer = Buffer.from(String(expected), 'utf8');
+  if (submittedBuffer.length !== expectedBuffer.length) return false;
+  return crypto.timingSafeEqual(submittedBuffer, expectedBuffer);
+}
+
+module.exports = async function handler(req, res) {
+  if (!allowMethods(req, res, ['POST'])) return;
+
+  try {
+    if (!(await checkDbRateLimit(req, res, 'auth:prize-login', 5))) return;
+
+    const body = await readJson(req);
+    const password = typeof body.password === 'string' ? body.password : '';
+
+    if (!password || Buffer.byteLength(password, 'utf8') > 64) {
+      sendError(res, 400, 'INVALID_REQUEST', 'Password is required');
+      return;
+    }
+
+    if (!safePasswordMatch(password, getPrizePassword())) {
+      sendError(res, 401, 'INVALID_CREDENTIALS', '비밀번호가 올바르지 않습니다.');
+      return;
+    }
+
+    const token = signToken(
+      { sub: 'prize:operator', role: 'prize' },
+      { expiresIn: '8h' }
+    );
+
+    sendJson(res, 200, {
+      token,
+      role: 'prize'
+    });
+  } catch (error) {
+    handleApiError(res, error);
+  }
+};
