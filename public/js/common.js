@@ -49,7 +49,7 @@
     try {
       localStorage.removeItem(key);
     } catch (error) {
-      // Storage can be unavailable in restrictive browser modes.
+      // Storage may be unavailable in restricted browser modes.
     }
   }
 

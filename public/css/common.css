@@ -63,7 +63,6 @@
   --danger: #a83232;
   --radius: 8px;
   --shadow: 0 12px 28px rgba(23, 32, 28, 0.08);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
   font-family: "A2Z", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
 }
 
@@ -238,12 +237,6 @@ label {
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: clamp(16px, 3vw, 24px);
-}
-
-.section-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 14px;
 }
 
 .metric-grid {

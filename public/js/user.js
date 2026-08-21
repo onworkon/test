@@ -245,26 +245,6 @@
     }
   }
 
-  async function ensureUser(route) {
-    if (!state.token) {
-      state.pendingRoute = route;
-      JSFes.go('/stamp');
-      return false;
-    }
-
-    if (!state.me) {
-      await loadMe().catch(() => null);
-    }
-
-    if (!state.me) {
-      state.pendingRoute = route;
-      JSFes.go('/stamp');
-      return false;
-    }
-
-    return true;
-  }
-
   function noticeHtml() {
     if (!state.notice) return '';
     return `<div class="notice">${JSFes.escapeHtml(state.notice.message)}</div>`;
@@ -344,33 +324,6 @@
       </div>
     `;
 
-  }
-
-  function getProgressPercent() {
-    if (!state.me) return 0;
-    return Math.min(100, Math.round((state.me.stampCount / state.me.stampRequirement) * 100));
-  }
-
-  function groupBoothsByFloor() {
-    return state.booths.reduce((groups, booth) => {
-      const floor = booth.floor_label || '기타';
-      if (!groups[floor]) groups[floor] = [];
-      groups[floor].push(booth);
-      return groups;
-    }, {});
-  }
-
-  function boothTileHtml(booth) {
-    const meta = JSFes.statusMeta(booth.status);
-    return `
-      <button type="button" class="booth-tile ${JSFes.escapeHtml(booth.status)}" data-booth-id="${JSFes.escapeHtml(booth.booth_id)}">
-        <span>
-          <strong>${JSFes.escapeHtml(booth.name)}</strong>
-          <span class="booth-location">${JSFes.escapeHtml(booth.room_label || booth.booth_id)}</span>
-        </span>
-        <span class="status-chip ${meta.className}">${meta.label}</span>
-      </button>
-    `;
   }
 
   function primaryNavHtml(activeRoute) {
@@ -683,6 +636,9 @@
 
     const loggedIn = Boolean(state.token && state.me);
     const stampSlots = JSFes.buildStampBoard(loggedIn ? state.me.stamps : [], 9);
+    const progressPercent = loggedIn
+      ? Math.min(100, Math.round((state.me.stampCount / state.me.stampRequirement) * 100))
+      : 0;
 
     app.innerHTML = `
       <div class="user-flow-screen stamp-screen">
@@ -703,7 +659,7 @@
             <span>진행률</span>
             <span>${loggedIn ? `${state.me.stampCount}/${state.me.stampRequirement}` : '0/9'}</span>
           </div>
-          <progress class="stamp-progress-track" max="100" value="${loggedIn ? getProgressPercent() : 0}">${loggedIn ? getProgressPercent() : 0}%</progress>
+          <progress class="stamp-progress-track" max="100" value="${progressPercent}">${progressPercent}%</progress>
           <div class="stamp-board">
             ${stampSlots.map((stamp) => stamp && loggedIn ? `
               <div class="stamp-cell done" title="${JSFes.escapeHtml(stamp.name)}">

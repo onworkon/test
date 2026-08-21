@@ -1,10 +1,3 @@
-.login-form {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px;
-  align-items: end;
-}
-
 .home-screen {
   width: min(375px, 100%);
   min-height: 754px;
@@ -436,68 +429,8 @@
   color: rgba(20, 25, 50, 0.5);
 }
 
-.flow-card {
-  position: absolute;
-  left: calc(50% - 160px);
-  width: 320px;
-  display: grid;
-  gap: 16px;
-  border: 1.5px solid #283264;
-  border-radius: 8px;
-  background: #fff;
-  padding: 14px 12px;
-}
-
-.flow-card-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.flow-card-head > div {
-  flex: 1;
-  min-width: 0;
-}
-
-.flow-card-head h2 {
-  margin: 0;
-  color: rgba(0, 0, 0, 0.58);
-  font-size: 1rem;
-  font-weight: 800;
-  line-height: 18px;
-}
-
-.flow-card-head p {
-  margin: 4px 0 0;
-  color: rgba(0, 0, 0, 0.38);
-  font-size: 0.68rem;
-  line-height: 1.35;
-}
-
-.flow-dot {
-  flex: 0 0 auto;
-  width: 16px;
-  height: 16px;
-  border-radius: 8px;
-  border: 1px solid #283264;
-  background:
-    linear-gradient(0deg, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
-    #283264;
-}
-
 .stamp-screen {
   min-height: 960px;
-}
-
-.stamp-screen .scan-panel {
-  top: 180px;
-  min-height: 300px;
-}
-
-.stamp-card {
-  top: 540px;
-  min-height: 320px;
 }
 
 .map-title-block h1 {
@@ -841,46 +774,6 @@
   white-space: nowrap;
 }
 
-.floor-band {
-  display: grid;
-  gap: 10px;
-}
-
-.floor-title {
-  margin: 14px 0 0;
-  color: var(--muted);
-  font-size: 0.96rem;
-}
-
-.booth-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 10px;
-}
-
-.booth-tile {
-  display: grid;
-  min-height: 116px;
-  align-content: space-between;
-  gap: 8px;
-  padding: 12px;
-  border: 1px solid rgba(40, 50, 100, 0.2);
-  border-radius: var(--radius);
-  background: #fff;
-  text-align: left;
-  color: var(--text);
-  overflow: hidden;
-}
-
-.booth-tile:hover {
-  background: #f8f9fd;
-}
-
-.booth-location {
-  color: var(--muted);
-  font-size: 0.84rem;
-}
-
 .stamp-board {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
@@ -920,49 +813,6 @@
 .stamp-cell.done .stamp-mark {
   background: var(--primary);
   color: #fff;
-}
-
-.stamp-name {
-  width: 100%;
-  min-width: 0;
-  overflow-wrap: anywhere;
-  color: var(--muted);
-  font-size: 0.78rem;
-}
-
-.scan-panel {
-  display: grid;
-  gap: 12px;
-}
-
-.mode-tabs {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.mode-tabs button {
-  background: #fff;
-  color: var(--text);
-  border-color: var(--line);
-}
-
-.mode-tabs button.active {
-  background: var(--primary);
-  color: #fff;
-  border-color: var(--primary);
-}
-
-.confirm-row {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  color: var(--muted);
-}
-
-.confirm-row input {
-  width: 18px;
-  height: 18px;
 }
 
 .booth-dialog {
@@ -1298,58 +1148,6 @@
 }
 
 @media (max-width: 620px) {
-  .user-shell .metric-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .user-shell .metric {
-    min-width: 0;
-    padding: 9px 7px;
-    text-align: center;
-  }
-
-  .user-shell .metric span {
-    font-size: 0.75rem;
-    line-height: 1.2;
-  }
-
-  .user-shell .metric strong {
-    font-size: 1.25rem;
-  }
-
-  .login-form {
-    grid-template-columns: 1fr;
-  }
-
-  .booth-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-  }
-
-  .booth-tile {
-    min-height: 104px;
-    padding: 10px;
-  }
-
-  .booth-tile strong {
-    display: block;
-    line-height: 1.25;
-    overflow-wrap: anywhere;
-  }
-
-  .booth-location {
-    display: block;
-    margin-top: 3px;
-  }
-
-  .status-chip {
-    width: fit-content;
-    max-width: 100%;
-    min-height: 26px;
-    padding: 2px 8px;
-    font-size: 0.78rem;
-  }
-
   .stamp-board {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
@@ -1367,56 +1165,17 @@
     font-size: 0.9rem;
   }
 
-  .stamp-name {
-    font-size: 0.74rem;
-    line-height: 1.25;
-  }
-
-  .split {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .split > .panel {
-    width: 100%;
-  }
-
-  .scan-panel {
-    position: static;
-    order: -1;
-  }
-
-  .user-flow-screen .scan-panel {
-    position: absolute;
-    order: initial;
-  }
-
-  .mode-tabs {
-    gap: 6px;
-  }
-
-  .confirm-row {
-    align-items: flex-start;
-    line-height: 1.35;
-  }
-
   .booth-dialog {
     width: min(280px, calc(100% - 20px));
   }
 }
 
 @media (max-width: 340px) {
-  .booth-grid {
-    grid-template-columns: 1fr;
-  }
-
   .stamp-board {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-/* Pixel-aligned mobile layouts from the UI handoff files. */
 .user-shell {
   min-width: 320px;
   background: #f5f5f5;

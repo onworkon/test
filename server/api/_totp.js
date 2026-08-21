@@ -136,7 +136,7 @@ function verifyTotpCode(boothId, code, nowMs = Date.now(), generation = 0) {
     };
   }
 
-  // Allow only a short post-boundary grace period for a code submitted just before expiry.
+  // Allow brief grace for codes submitted just before expiry.
   if (nowSeconds % STEP_SECONDS < PREVIOUS_STEP_GRACE_SECONDS) {
     const previousDelta = speakeasy.totp.verifyDelta({
       ...verificationOptions,
