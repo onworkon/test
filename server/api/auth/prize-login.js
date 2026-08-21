@@ -1,8 +1,12 @@
 const crypto = require('crypto');
-const { signToken } = require('../_auth');
+const { signToken, getPrizeCredentialVersion } = require('../_auth');
 const { getPrizePassword } = require('../_config');
 const { allowMethods, readJson, sendJson, sendError, handleApiError } = require('../_http');
-const { checkDbRateLimit } = require('../_rate_limit');
+const {
+  checkDbRateLimits,
+  makeGlobalRateKey,
+  makeRateKey
+} = require('../_rate_limit');
 
 function safePasswordMatch(submitted, expected) {
   const submittedBuffer = Buffer.from(String(submitted), 'utf8');
@@ -15,7 +19,18 @@ module.exports = async function handler(req, res) {
   if (!allowMethods(req, res, ['POST'])) return;
 
   try {
-    if (!(await checkDbRateLimit(req, res, 'auth:prize-login', 5))) return;
+    if (!(await checkDbRateLimits(res, [
+      {
+        rateKey: makeRateKey(req, 'auth:prize-login'),
+        limit: 5,
+        windowMs: 60000
+      },
+      {
+        rateKey: makeGlobalRateKey('auth:prize-login'),
+        limit: 50,
+        windowMs: 5 * 60 * 1000
+      }
+    ]))) return;
 
     const body = await readJson(req);
     const password = typeof body.password === 'string' ? body.password : '';
@@ -31,7 +46,11 @@ module.exports = async function handler(req, res) {
     }
 
     const token = signToken(
-      { sub: 'prize:operator', role: 'prize' },
+      {
+        sub: 'prize:operator',
+        role: 'prize',
+        credential_version: getPrizeCredentialVersion()
+      },
       { expiresIn: '8h' }
     );
 
@@ -40,6 +59,6 @@ module.exports = async function handler(req, res) {
       role: 'prize'
     });
   } catch (error) {
-    handleApiError(res, error);
+    await handleApiError(res, error);
   }
 };

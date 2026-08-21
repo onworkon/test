@@ -52,6 +52,6 @@ module.exports = async function handler(req, res) {
       notice
     });
   } catch (error) {
-    handleApiError(res, error);
+    await handleApiError(res, error);
   }
 };

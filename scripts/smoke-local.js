@@ -71,10 +71,11 @@ async function main() {
     await waitForServer(child);
 
     const checks = [
+      { path: '/', status: 307, location: '/start' },
       { path: '/start', status: 200 },
       { path: '/map', status: 200 },
       { path: '/stamp', status: 200 },
-      { path: '/reward', status: 200 },
+      { path: '/reward', status: 307, location: '/stamp' },
       { path: '/schedule', status: 200 },
       { path: '/manager', status: 200 },
       { path: '/admin', status: 200 },
@@ -99,6 +100,11 @@ async function main() {
       const response = await request(check.path, check.method || 'GET');
       if (response.statusCode !== check.status) {
         throw new Error(`${check.path} returned ${response.statusCode}, expected ${check.status}`);
+      }
+      if (check.location && response.headers.location !== check.location) {
+        throw new Error(
+          `${check.path} redirected to ${response.headers.location || 'nowhere'}, expected ${check.location}`
+        );
       }
 
       if (!response.headers['x-content-type-options']) {

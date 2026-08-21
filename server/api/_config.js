@@ -34,7 +34,7 @@ function getStampRequirement() {
 }
 
 function getPoolMax() {
-  return positiveIntegerEnv('PG_POOL_MAX', 10, 100);
+  return positiveIntegerEnv('PG_POOL_MAX', 5, 100);
 }
 
 function getPrizePassword() {
@@ -42,14 +42,15 @@ function getPrizePassword() {
 }
 
 function getAllowedOrigin() {
-  const configured = (process.env.ALLOWED_ORIGIN || '*').trim();
+  const configured = (process.env.ALLOWED_ORIGIN || '').trim();
+  if (!configured) return null;
   if (configured === '*') return '*';
 
   try {
     const url = new URL(configured);
-    return ['http:', 'https:'].includes(url.protocol) ? url.origin : '*';
+    return ['http:', 'https:'].includes(url.protocol) ? url.origin : null;
   } catch (error) {
-    return '*';
+    return null;
   }
 }
 

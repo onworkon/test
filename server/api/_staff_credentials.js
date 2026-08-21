@@ -12,6 +12,23 @@ function parseManagerLoginCode(value) {
   };
 }
 
+function staffAccountIdForRole(role, codeNumber) {
+  if (role === 'admin') return 0;
+  if (role !== 'manager') return null;
+
+  const normalizedCodeNumber = Number(codeNumber);
+  if (
+    !Number.isInteger(normalizedCodeNumber) ||
+    normalizedCodeNumber < 1 ||
+    normalizedCodeNumber > 99
+  ) {
+    return null;
+  }
+
+  return normalizedCodeNumber;
+}
+
 module.exports = {
-  parseManagerLoginCode
+  parseManagerLoginCode,
+  staffAccountIdForRole
 };

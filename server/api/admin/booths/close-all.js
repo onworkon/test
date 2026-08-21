@@ -38,6 +38,6 @@ module.exports = async function handler(req, res) {
       closedCount
     });
   } catch (error) {
-    handleApiError(res, error);
+    await handleApiError(res, error);
   }
 };

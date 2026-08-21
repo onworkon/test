@@ -3,6 +3,7 @@ const { join } = require('path');
 const { loadEnv } = require('./_env');
 const { createPool } = require('./_db');
 const { isValidPassword } = require('../server/api/_security');
+const { staffAccountIdForRole } = require('../server/api/_staff_credentials');
 
 const root = join(__dirname, '..');
 loadEnv(root);
@@ -56,15 +57,20 @@ async function main() {
   const passwordHash = await bcrypt.hash(args.password, 10);
   const role = args.role;
   const boothId = args['booth-id'] || null;
+  let staffAccountId = staffAccountIdForRole(role);
 
   try {
     await client.query('BEGIN');
 
     if (role === 'manager') {
-      const booth = await client.query('SELECT booth_id FROM booths WHERE booth_id = $1', [boothId]);
+      const booth = await client.query(
+        'SELECT booth_id, code_number FROM booths WHERE booth_id = $1',
+        [boothId]
+      );
       if (!booth.rows[0]) {
         throw new Error(`Booth was not found: ${boothId}`);
       }
+      staffAccountId = staffAccountIdForRole(role, booth.rows[0].code_number);
     }
 
     const existing = role === 'admin'
@@ -81,6 +87,11 @@ async function main() {
         );
 
     if (existing.rows[0]) {
+      if (Number(existing.rows[0].id) !== staffAccountId) {
+        throw new Error(
+          `${role} account ID must be ${staffAccountId}; run database migrations first`
+        );
+      }
       await client.query(
         `UPDATE staff_accounts
             SET password_hash = $1,
@@ -91,9 +102,9 @@ async function main() {
       );
     } else {
       await client.query(
-        `INSERT INTO staff_accounts (role, booth_id, password_hash)
-         VALUES ($1, $2, $3)`,
-        [role, boothId, passwordHash]
+        `INSERT INTO staff_accounts (id, role, booth_id, password_hash)
+         VALUES ($1, $2, $3, $4)`,
+        [staffAccountId, role, boothId, passwordHash]
       );
     }
 

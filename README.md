@@ -85,7 +85,7 @@ npm run staff:upsert -- --role admin --password "새-관리자-비밀번호"
 PRIZE_PASSWORD=새-비밀번호
 ```
 
-비밀번호를 바꿔도 이미 발급된 상품 지급 토큰은 최대 8시간 동안 유효하다. 즉시 모든 로그인 세션을 끊어야 한다면 `JWT_SECRET`도 함께 교체해야 하지만, 이 경우 사용자·담당자·관리자 세션까지 전부 로그아웃된다. 현재는 20번 학생회 담당자 비밀번호와 상품 지급 기본 비밀번호가 같으므로 추후 둘 중 하나를 변경할 때 이 절차를 따른다.
+상품 지급 토큰에는 현재 `PRIZE_PASSWORD`에서 파생한 자격 증명 버전이 포함된다. 비밀번호를 변경하고 다시 배포하면 기존 상품 지급 토큰은 즉시 거부되며, 사용자·담당자·관리자 세션에는 영향을 주지 않는다.
 
 상품 지급 담당자는 화면에 표시된 번호와 실물 팔찌 번호가 일치할 때만 지급 완료를 처리한다.
 
@@ -110,7 +110,7 @@ npm run tag:upsert -- --tag-uid 04:12:34:56 --booth-id booth-01
 
 `tag_maps`는 태그 UID와 부스 ID 양쪽을 모두 고유값으로 강제한다. 따라서 한 태그는 한 부스에만, 한 부스도 한 태그에만 연결된다. 관리자 화면이나 `tag:upsert`로 부스의 새 태그를 저장하면 그 부스의 기존 태그 매핑은 같은 트랜잭션에서 교체된다.
 
-담당자 로그인에서는 6자리 코드의 앞 2자리로 고유한 부스 계정을 찾고, 뒤 4자리를 bcrypt 해시와 대조한 뒤 해당 부스 관리 화면을 연다. 로그인 시도 제한은 존재하지 않는 부스 번호를 포함해 요청 IP 전체와 IP·부스 조합에 각각 적용한다.
+담당자 로그인에서는 6자리 코드의 앞 2자리로 고유한 부스 계정을 찾고, 뒤 4자리를 bcrypt 해시와 대조한 뒤 해당 부스 관리 화면을 연다. 로그인 시도 제한은 존재하지 않는 부스 번호를 포함해 전체 부스 로그인, 요청 IP 전체, IP·부스 조합 범위에 각각 적용한다.
 
 ### 스탬프판과 상품 조건
 
@@ -120,7 +120,7 @@ npm run tag:upsert -- --tag-uid 04:12:34:56 --booth-id booth-01
 
 보드가 완성되면 추가 전자 적립을 받지 않으며, 상품 지급 완료 후에도 일반 적립 API가 모든 요청을 차단한다. 전자 스탬프 기준은 임시 환경 변수로 변경하지 않고 기획에 따라 9로 고정한다. 관리자가 지급 상태를 복구하면 지급 방식 기록도 함께 초기화된다.
 
-스탬프 이미지는 `public/assets/stamps/01.webp`부터 `20.webp`까지의 경로를 사용한다. 이미지가 아직 없는 개발 단계에서는 글자 마크가 대신 표시되며, 이후 동일한 파일명으로 이미지를 추가하면 코드나 DB를 다시 변경하지 않아도 자동으로 표시된다.
+스탬프 이미지는 `public/assets/stamps/01.webp`부터 `20.webp`까지의 경로를 사용한다. 이미지가 없으면 화면에는 글자 마크가 대신 표시되지만 `npm run ops:check`는 누락 파일을 운영 실패로 보고한다. 이후 동일한 파일명으로 이미지를 추가하면 코드나 DB를 다시 변경할 필요가 없다. 일정 이미지는 `public/assets/images/schedule.png`가 없을 때 경고로 보고하며 화면에는 현재의 준비 중 안내가 표시된다.
 
 For code stamping, each booth has a fixed two-digit `code_number` and a rotating four-digit TOTP. Managers see the combined value in `07-4821` format, and users enter it as the single six-digit value `074821`. The server uses the first two digits to select exactly one booth before validating the TOTP, so no booth list or all-booth code scan is required.
 
@@ -152,7 +152,7 @@ npm run export:csv -- logs exports/logs.csv
 
 ## Main Routes
 
-- User: `/start`, `/map`, `/stamp`, `/reward`, `/schedule`
+- User: `/start`, `/map`, `/stamp`, `/schedule` (`/reward`는 `/stamp`로 이동)
 - Manager: `/manager`
 - Admin: `/admin`
 - Prize operator: `/prize` (direct URL only; not linked from the public pages)

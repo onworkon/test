@@ -1,6 +1,7 @@
 @font-face {
   font-family: "A2Z";
-  src: url("/assets/fonts/a2z-regular.otf") format("opentype");
+  src: url("/assets/fonts/a2z-regular.woff2") format("woff2"),
+       url("/assets/fonts/a2z-regular.otf") format("opentype");
   font-style: normal;
   font-weight: 400;
   font-display: swap;
@@ -8,7 +9,8 @@
 
 @font-face {
   font-family: "A2Z";
-  src: url("/assets/fonts/a2z-medium.otf") format("opentype");
+  src: url("/assets/fonts/a2z-medium.woff2") format("woff2"),
+       url("/assets/fonts/a2z-medium.otf") format("opentype");
   font-style: normal;
   font-weight: 500;
   font-display: swap;
@@ -16,7 +18,8 @@
 
 @font-face {
   font-family: "A2Z 4Regular";
-  src: url("/assets/fonts/a2z-regular.otf") format("opentype");
+  src: url("/assets/fonts/a2z-regular.woff2") format("woff2"),
+       url("/assets/fonts/a2z-regular.otf") format("opentype");
   font-style: normal;
   font-weight: normal;
   font-display: swap;
@@ -24,7 +27,8 @@
 
 @font-face {
   font-family: "A2Z";
-  src: url("/assets/fonts/a2z-semibold.otf") format("opentype");
+  src: url("/assets/fonts/a2z-semibold.woff2") format("woff2"),
+       url("/assets/fonts/a2z-semibold.otf") format("opentype");
   font-style: normal;
   font-weight: 600 900;
   font-display: swap;
@@ -32,7 +36,8 @@
 
 @font-face {
   font-family: "Yang Organization Gothic";
-  src: url("/assets/fonts/yang-organization-gothic-bold.ttf") format("truetype");
+  src: url("/assets/fonts/yang-organization-gothic-bold.woff2") format("woff2"),
+       url("/assets/fonts/yang-organization-gothic-bold.ttf") format("truetype");
   font-style: normal;
   font-weight: 700;
   font-display: swap;
@@ -51,7 +56,7 @@
   --status-outline: #141932;
   --status-outline-width: 1.5px;
   --status-open-fill: #141932;
-  --status-soldout-fill: rgba(20, 25, 50, 0.5);
+  --status-soldout-fill: rgba(40, 50, 100, 0.5);
   --status-closed-fill: #ffffff;
   --accent: #4153a2;
   --warn: #9a6a12;

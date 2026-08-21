@@ -3,7 +3,8 @@
   const authState = document.getElementById('authState');
   const logoutButton = document.getElementById('logoutButton');
   const dialog = document.getElementById('boothDialog');
-  const routes = new Set(['/start', '/map', '/stamp', '/reward', '/schedule']);
+  const prizeDialog = document.getElementById('prizeDialog');
+  const routes = new Set(['/start', '/map', '/stamp', '/schedule']);
   let messageClearTimer = null;
   let messageSequence = 0;
   let renderSequence = 0;
@@ -17,14 +18,47 @@
     notice: null,
     noticeLoaded: false,
     mapPrefetchInFlight: false,
+    mapDataPromise: null,
+    mapDataLoadedAt: 0,
     mapRefreshRequest: 0,
     scanMode: JSFes.isIos() ? 'totp' : 'nfc',
     queueProcessing: false,
     activityInFlight: false,
-    activityQueued: false,
+    activityLastSentAt: 0,
+    meLoadedAt: 0,
     pendingRoute: null,
     pendingStampAction: null
   };
+
+  const mapZones = [
+    {
+      key: 'third',
+      label: '3층',
+      slots: ['2-1', '2-2', '2-3', '2-4', '2-5', '2-6', '푸름터']
+        .map((location) => ({ location, label: location }))
+    },
+    {
+      key: 'second',
+      label: '2층',
+      slots: ['1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '1-7', '1-8']
+        .map((location) => ({ location, label: location }))
+    },
+    {
+      key: 'first',
+      label: '1층',
+      slots: [
+        { location: '지구과학 실험실', label: '지구' },
+        { location: '물리실험실', label: '물리' },
+        { location: '생물실험실', label: '생물' },
+        { location: '화학실험실', label: '화학' }
+      ]
+    },
+    {
+      key: 'annex',
+      label: '정보관',
+      slots: [{ location: '도서관', label: '도서관' }]
+    }
+  ];
 
   function currentRoute() {
     const path = window.location.pathname;
@@ -65,43 +99,51 @@
 
   function recordActivity() {
     if (!state.token || !state.me) return;
+    const now = Date.now();
+    if (state.activityInFlight || now - state.activityLastSentAt < 25000) return;
 
-    if (state.activityInFlight) {
-      state.activityQueued = true;
-      return;
-    }
-
+    const requestedToken = state.token;
     state.activityInFlight = true;
+    state.activityLastSentAt = now;
     JSFes.apiFetch('/api/users/activity', {
       method: 'POST',
-      token: state.token,
+      token: requestedToken,
       timeoutMs: 5000
     }).catch((error) => {
-      if (!JSFes.isAuthError(error)) return;
-      state.token = null;
-      state.me = null;
-      JSFes.clearToken(JSFes.storageKeys.userToken);
-      updateAuthState();
+      if (JSFes.isAuthError(error) && state.token === requestedToken) {
+        state.token = null;
+        state.me = null;
+        state.meLoadedAt = 0;
+        JSFes.clearToken(JSFes.storageKeys.userToken);
+        updateAuthState();
+        return;
+      }
+      state.activityLastSentAt = 0;
     }).finally(() => {
       state.activityInFlight = false;
-      if (!state.activityQueued) return;
-      state.activityQueued = false;
-      recordActivity();
     });
   }
 
-  async function fetchMapData() {
-    const [booths, notices] = await Promise.all([
-      JSFes.apiFetch('/api/booths').catch(() => null),
-      JSFes.apiFetch('/api/notices').catch(() => null)
-    ]);
+  async function fetchMapData(forceRefresh = false) {
+    if (state.mapDataPromise) return state.mapDataPromise;
 
-    return {
+    state.mapDataPromise = Promise.all([
+      forceRefresh || !state.boothsLoaded
+        ? JSFes.apiFetch('/api/booths').catch(() => null)
+        : Promise.resolve({ booths: state.booths }),
+      forceRefresh || !state.noticeLoaded
+        ? JSFes.apiFetch('/api/notices').catch(() => null)
+        : Promise.resolve({ notice: state.notice })
+    ]).then(([booths, notices]) => ({
       booths: booths ? booths.booths || [] : null,
       notice: notices ? notices.notice || null : null,
       boothsLoaded: Boolean(booths),
       noticeLoaded: Boolean(notices)
-    };
+    })).finally(() => {
+      state.mapDataPromise = null;
+    });
+
+    return state.mapDataPromise;
   }
 
   function applyMapData(mapData) {
@@ -112,6 +154,9 @@
     if (mapData.noticeLoaded) {
       state.notice = mapData.notice;
       state.noticeLoaded = true;
+    }
+    if (mapData.boothsLoaded && mapData.noticeLoaded) {
+      state.mapDataLoadedAt = Date.now();
     }
   }
 
@@ -126,31 +171,22 @@
     state.noticeLoaded = true;
   }
 
-  async function loadBooths() {
-    const booths = await JSFes.apiFetch('/api/booths').catch(() => null);
-    if (!booths) return;
-    state.booths = booths.booths || [];
-    state.boothsLoaded = true;
-  }
-
   async function prefetchMapData() {
     if (state.mapPrefetchInFlight || (state.boothsLoaded && state.noticeLoaded)) return;
     state.mapPrefetchInFlight = true;
     try {
-      await Promise.all([
-        state.boothsLoaded ? null : loadBooths(),
-        state.noticeLoaded ? null : loadNotice()
-      ]);
+      applyMapData(await fetchMapData());
     } finally {
       state.mapPrefetchInFlight = false;
     }
   }
 
   async function refreshMapData(sequence) {
+    if (Date.now() - state.mapDataLoadedAt < 30000) return;
     const request = ++state.mapRefreshRequest;
     const previousBooths = JSON.stringify(state.booths);
     const previousNotice = JSON.stringify(state.notice);
-    const mapData = await fetchMapData();
+    const mapData = await fetchMapData(true);
 
     if (request !== state.mapRefreshRequest) return;
 
@@ -188,15 +224,20 @@
       return null;
     }
 
+    const requestedToken = state.token;
     try {
-      state.me = await JSFes.apiFetch('/api/users/me', { token: state.token });
+      const me = await JSFes.apiFetch('/api/users/me', { token: requestedToken });
+      if (state.token !== requestedToken) return state.me;
+      state.me = me;
+      state.meLoadedAt = Date.now();
       updateAuthState();
       void processStampQueue();
       return state.me;
     } catch (error) {
-      if (JSFes.isAuthError(error)) {
+      if (JSFes.isAuthError(error) && state.token === requestedToken) {
         state.token = null;
         state.me = null;
+        state.meLoadedAt = 0;
         JSFes.clearToken(JSFes.storageKeys.userToken);
         updateAuthState();
       }
@@ -440,6 +481,7 @@
 
       state.token = result.token;
       state.me = result.user || null;
+      state.meLoadedAt = state.me ? Date.now() : 0;
       state.pendingRoute = null;
       state.pendingStampAction = null;
       JSFes.setToken(JSFes.storageKeys.userToken, result.token);
@@ -457,7 +499,48 @@
   async function renderMap(sequence) {
     if (sequence !== undefined && sequence !== renderSequence) return;
     const booths = state.booths || [];
-    const popupTestBooth = booths.find((booth) => booth.booth_id === 'booth-20');
+    const normalizeLocation = (value) => String(value || '')
+      .normalize('NFKC')
+      .trim()
+      .replace(/[‐‑‒–—−]/g, '-')
+      .replace(/\s+/g, ' ');
+    const boothsByLocation = new Map();
+
+    booths.forEach((booth) => {
+      const location = normalizeLocation(booth.room_label);
+      if (location && !boothsByLocation.has(location)) {
+        boothsByLocation.set(location, booth);
+      }
+    });
+
+    function mapSlotHtml(slot) {
+      const booth = boothsByLocation.get(normalizeLocation(slot.location));
+      const label = JSFes.escapeHtml(slot.label);
+
+      if (!booth) {
+        return `
+          <span class="map-booth map-booth-static" aria-label="${JSFes.escapeHtml(slot.location)}">
+            <span class="map-booth-label">${label}</span>
+          </span>
+        `;
+      }
+
+      const meta = JSFes.statusMeta(booth.status);
+
+      return `
+        <button
+          type="button"
+          class="map-booth ${JSFes.escapeHtml(booth.status)}"
+          data-booth-id="${JSFes.escapeHtml(booth.booth_id)}"
+          data-booth-popup
+          aria-controls="boothDialog"
+          aria-haspopup="dialog"
+          aria-label="${JSFes.escapeHtml(slot.location)}, ${JSFes.escapeHtml(booth.name)}, ${meta.label}"
+          title="${JSFes.escapeHtml(booth.name)} (${JSFes.escapeHtml(slot.location)})">
+          <span class="map-booth-label">${label}</span>
+        </button>
+      `;
+    }
 
     app.innerHTML = `
       <div class="map-screen">
@@ -470,18 +553,15 @@
         </section>
         <section class="map-board" aria-label="부스 배치도">
           <div class="map-canvas">
-            ${popupTestBooth ? (() => {
-              const meta = JSFes.statusMeta(popupTestBooth.status);
-              return `
-                <button
-                  type="button"
-                  class="map-pin map-pin-popup-test ${JSFes.escapeHtml(popupTestBooth.status)}"
-                  data-booth-id="${JSFes.escapeHtml(popupTestBooth.booth_id)}"
-                  aria-label="${JSFes.escapeHtml(popupTestBooth.name)} ${meta.label}">
-                  <span>20</span>
-                </button>
-              `;
-            })() : ''}
+            ${mapZones.map((zone) => `
+              <section class="map-floor map-floor-${zone.key}" aria-labelledby="mapFloor-${zone.key}">
+                <h2 id="mapFloor-${zone.key}" class="map-floor-label">${zone.label}</h2>
+                <span class="map-floor-divider" aria-hidden="true"></span>
+                <div class="map-floor-booths">
+                  ${zone.slots.map(mapSlotHtml).join('')}
+                </div>
+              </section>
+            `).join('')}
           </div>
         </section>
         <ul class="map-legend" aria-label="부스 운영 상태">
@@ -499,6 +579,9 @@
                   type="button"
                   class="map-list-card"
                   data-booth-id="${JSFes.escapeHtml(booth.booth_id)}"
+                  data-booth-popup
+                  aria-controls="boothDialog"
+                  aria-haspopup="dialog"
                   aria-label="${JSFes.escapeHtml(booth.name)} ${JSFes.escapeHtml(booth.room_label || booth.booth_id)}, ${meta.label}. ${JSFes.escapeHtml(booth.description || '')}">
                   <span class="map-card-status ${JSFes.escapeHtml(booth.status)}" aria-hidden="true"></span>
                   <span class="map-card-main">
@@ -516,7 +599,7 @@
       </div>
     `;
 
-    app.querySelectorAll('[data-booth-id]').forEach((button) => {
+    app.querySelectorAll('[data-booth-popup][data-booth-id]').forEach((button) => {
       button.addEventListener('click', () => {
         const booth = state.booths.find((item) => item.booth_id === button.dataset.boothId);
         showBoothDialog(booth);
@@ -720,20 +803,40 @@
     return false;
   }
 
+  function showPrizePopup() {
+    prizeDialog.innerHTML = `
+      <section
+        class="prize-popup"
+        aria-labelledby="prizePopupTitle"
+        aria-describedby="prizePopupInstruction">
+        <button type="button" class="prize-popup-close" aria-label="상품 수령 안내 팝업 닫기"></button>
+        <h2 id="prizePopupTitle" class="prize-popup-title">스탬프투어 완수를<br>축하드립니다!!</h2>
+        <p id="prizePopupInstruction" class="prize-popup-instruction">
+          <strong>3층 푸름터 학생회 부스</strong><span>에서<br>학생회에게 이 팝업을 보여주세요.</span>
+        </p>
+      </section>
+    `;
+
+    const closeButton = prizeDialog.querySelector('.prize-popup-close');
+    closeButton.addEventListener('click', () => prizeDialog.close());
+    prizeDialog.showModal();
+    closeButton.focus({ preventScroll: true });
+  }
+
   function renderScanBody() {
     const scanBody = document.getElementById('scanBody');
     if (!scanBody) return;
 
     const loggedIn = Boolean(state.token && state.me);
     if (loggedIn && state.me.reward_claimed) {
-      scanBody.innerHTML = '<p class="message success">상품 수령이 완료되어 추가로 적립할 수 없습니다.</p>';
+      scanBody.innerHTML = '<p class="stamp-reward-complete">상품 수령이 완료되었습니다</p>';
       return;
     }
     if (loggedIn && state.me.stampCount >= state.me.stampRequirement) {
       scanBody.innerHTML = `
-        <p class="message success">스탬프판을 완성했습니다.</p>
-        <button type="button" data-route="/reward">상품 수령 확인</button>
+        <button id="prizePopupButton" type="button">상품 수령하기</button>
       `;
+      document.getElementById('prizePopupButton').addEventListener('click', showPrizePopup);
       return;
     }
 
@@ -795,16 +898,23 @@
 
   async function submitStamp(payload) {
     setMessage('처리 중입니다.');
+    const requestedToken = state.token;
     try {
-      await JSFes.apiFetch('/api/stamps', {
+      const result = await JSFes.apiFetch('/api/stamps', {
         method: 'POST',
-        token: state.token,
+        token: requestedToken,
         body: payload,
         retries: 2
       });
-      await loadMe();
+      if (state.token !== requestedToken) return;
+      if (result.user) {
+        state.me = result.user;
+        state.meLoadedAt = Date.now();
+        updateAuthState();
+      } else {
+        await loadMe();
+      }
       await renderStamp();
-      setMessage('스탬프가 적립되었습니다.', 'success');
     } catch (error) {
       if (payload.type === 'nfc' && shouldQueueStamp(error)) {
         const queued = enqueueStamp(payload);
@@ -870,20 +980,28 @@
 
     try {
       const currentUid = state.me.uid;
+      const requestedToken = state.token;
       const currentUserItems = queue.filter((item) => item.uid === currentUid);
       const remaining = queue.filter((item) => item.uid !== currentUid);
 
-      for (const item of currentUserItems) {
+      let latestUser = null;
+      for (let index = 0; index < currentUserItems.length; index += 1) {
+        const item = currentUserItems[index];
+        if (state.token !== requestedToken || state.me?.uid !== currentUid) {
+          remaining.push(...currentUserItems.slice(index));
+          break;
+        }
         try {
-          await JSFes.apiFetch('/api/stamps', {
+          const result = await JSFes.apiFetch('/api/stamps', {
             method: 'POST',
-            token: state.token,
+            token: requestedToken,
             body: {
               type: 'nfc',
               tag_uid: item.tag_uid
             },
             retries: 1
           });
+          if (result.user) latestUser = result.user;
         } catch (error) {
           if (!['ALREADY_STAMPED', 'TAG_NOT_FOUND', 'BOOTH_CLOSED', 'REWARD_CLAIMED', 'BOARD_COMPLETE'].includes(error.code)) {
             remaining.push(item);
@@ -893,8 +1011,18 @@
 
       if (!writeStampQueue(remaining)) return;
 
-      if (remaining.length !== queue.length) {
-        await loadMe().catch(() => null);
+      if (
+        remaining.length !== queue.length &&
+        state.token === requestedToken &&
+        state.me?.uid === currentUid
+      ) {
+        if (latestUser) {
+          state.me = latestUser;
+          state.meLoadedAt = Date.now();
+          updateAuthState();
+        } else {
+          await loadMe().catch(() => null);
+        }
         if (currentRoute() === '/stamp') {
           await renderStamp();
           setMessage('저장해 둔 스탬프를 다시 전송했습니다.', 'success');
@@ -903,52 +1031,6 @@
     } finally {
       state.queueProcessing = false;
     }
-  }
-
-  async function renderReward(sequence) {
-    if (!(await ensureUser('/reward'))) return;
-    await loadMe();
-    if (currentRoute() !== '/reward') return;
-    if (sequence !== undefined && sequence !== renderSequence) return;
-
-    const eligible = state.me.stampCount >= state.me.stampRequirement;
-    const claimed = state.me.reward_claimed;
-
-    app.innerHTML = `
-      <div class="user-flow-screen reward-screen">
-        <div class="map-shell-strip" aria-hidden="true"></div>
-        ${primaryNavHtml(null)}
-        <section class="flow-title-block">
-          <h1>상품 수령</h1>
-          <p>지급 담당자에게 화면 번호와 실물 팔찌를 함께 보여주세요.</p>
-        </section>
-        <section class="flow-card reward-card">
-          <div class="flow-card-head">
-            <span class="flow-dot" aria-hidden="true"></span>
-            <div>
-              <h2>수령 상태</h2>
-              <p>팔찌 ${JSFes.escapeHtml(state.me.uid)}</p>
-            </div>
-          </div>
-        <div class="reward-progress">
-          <progress class="progress-bar" max="100" value="${getProgressPercent()}">${getProgressPercent()}%</progress>
-          <p class="subtle">스탬프 ${state.me.stampCount}/${state.me.stampRequirement}</p>
-        </div>
-        <div class="metric-grid">
-          <div class="metric"><span>조건</span><strong>${eligible ? '충족' : '미충족'}</strong></div>
-          <div class="metric"><span>수령 상태</span><strong>${claimed ? '완료' : '대기'}</strong></div>
-        </div>
-        <p class="reward-station-guide">${rewardGuideText(eligible, claimed)}</p>
-        <p id="pageMessage" class="message"></p>
-        </section>
-      </div>
-    `;
-  }
-
-  function rewardGuideText(eligible, claimed) {
-    if (claimed) return '상품 지급이 완료되었습니다.';
-    if (!eligible) return '스탬프 조건을 충족하면 상품 지급처에서 수령할 수 있습니다.';
-    return '상품 지급이 가능합니다. 지급 담당자가 팔찌 번호를 대조한 후 처리합니다.';
   }
 
   async function renderSchedule() {
@@ -960,21 +1042,87 @@
           <h1>축제 일정표</h1>
           <p>오늘의 타임라인을 확인하세요.</p>
         </section>
-        <section class="schedule-card" aria-label="축제 일정 타임라인">
-          <img id="scheduleImage" class="schedule-image" src="/assets/images/schedule.png" alt="축제 일정표" hidden>
-          <p id="scheduleFallback" class="schedule-fallback" hidden>일정표를 준비 중입니다.</p>
+        <section class="schedule-timeline-card" aria-labelledby="scheduleTimelineTitle">
+          <h2 id="scheduleTimelineTitle" class="sr-only">전체 축제 일정</h2>
+          <ol class="sr-only">
+            <li>08:00부터 08:10까지 학급 조회</li>
+            <li>08:10부터 12:10까지 1부 전시·체험 마당</li>
+            <li>12:10부터 13:10까지 점심식사</li>
+            <li>13:10부터 15:00까지 2부 공연마당</li>
+            <li>15:00부터 16:00까지 학급 종례 및 부스 정리</li>
+          </ol>
+          <div class="schedule-timeline-visual" aria-hidden="true">
+            <div class="schedule-time-list">
+              <time>08:00</time>
+              <time>08:10</time>
+              <time>12:10</time>
+              <time>13:10</time>
+              <time>15:00</time>
+              <time>16:00</time>
+            </div>
+            <div class="schedule-day-grid">
+              <span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <div class="schedule-day-labels">
+              <span>학급 조회</span>
+              <span>1부 전시·체험 마당</span>
+              <span>점심식사</span>
+              <span>2부 공연마당</span>
+              <span>학급 종례 및 부스 정리</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="schedule-performance-card" aria-labelledby="schedulePerformanceTitle">
+          <h2 id="schedulePerformanceTitle">2부 공연마당 순서</h2>
+          <ol class="sr-only">
+            <li>개막 선언</li><li>인트로 상영</li>
+            <li>뮤직비디오 상영, U&amp;I</li><li>댄스, 퓨즈</li>
+            <li>개인 공연, 1-7 박시은</li><li>개인 공연, 1-9 손유현</li>
+            <li>학급 공연, 1-1 외 2팀</li><li>밴드, 유월</li><li>밴드, 온빛</li>
+            <li>댄스, 퓨즈</li><li>교사 밴드, 교사 6인</li>
+            <li>히든 스테이지, ???</li><li>밴드, The stage</li><li>교사 댄스, 교사 7인</li>
+          </ol>
+          <div class="schedule-performance-grid" aria-hidden="true">
+            <div class="schedule-performance-lines">
+              <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <span class="schedule-performance-mask schedule-performance-mask-left"></span>
+            <span class="schedule-performance-mask schedule-performance-mask-right"></span>
+            <span class="schedule-performance-mask schedule-performance-mask-personal"></span>
+            <span class="schedule-performance-mask schedule-performance-mask-band"></span>
+            <span class="schedule-performance-divider"></span>
+
+            <span class="schedule-performance-label schedule-performance-wide schedule-performance-open">개막 선언</span>
+            <span class="schedule-performance-label schedule-performance-wide schedule-performance-intro">인트로 상영</span>
+            <span class="schedule-performance-label schedule-performance-kind schedule-performance-video">뮤직비디오 상영</span>
+            <span class="schedule-performance-label schedule-performance-kind schedule-performance-dance-one">댄스</span>
+            <span class="schedule-performance-label schedule-performance-kind schedule-performance-personal">개인 공연</span>
+            <span class="schedule-performance-label schedule-performance-kind schedule-performance-class">학급 공연</span>
+            <span class="schedule-performance-label schedule-performance-kind schedule-performance-band-group">밴드</span>
+            <span class="schedule-performance-label schedule-performance-kind schedule-performance-dance-two">댄스</span>
+            <span class="schedule-performance-label schedule-performance-kind schedule-performance-teacher-band">교사 밴드</span>
+            <span class="schedule-performance-label schedule-performance-kind schedule-performance-hidden">히든 스테이지</span>
+            <span class="schedule-performance-label schedule-performance-kind schedule-performance-stage-band">밴드</span>
+            <span class="schedule-performance-label schedule-performance-kind schedule-performance-teacher-dance">교사 댄스</span>
+
+            <span class="schedule-performance-label schedule-performance-performer schedule-performer-01">U&amp;I</span>
+            <span class="schedule-performance-label schedule-performance-performer schedule-performer-02">퓨즈</span>
+            <span class="schedule-performance-label schedule-performance-performer schedule-performer-03">1-7 박시은</span>
+            <span class="schedule-performance-label schedule-performance-performer schedule-performer-04">1-9 손유현</span>
+            <span class="schedule-performance-label schedule-performance-performer schedule-performer-05">1-1 외 2팀</span>
+            <span class="schedule-performance-label schedule-performance-performer schedule-performer-06">유월</span>
+            <span class="schedule-performance-label schedule-performance-performer schedule-performer-07">온빛</span>
+            <span class="schedule-performance-label schedule-performance-performer schedule-performer-08">퓨즈</span>
+            <span class="schedule-performance-label schedule-performance-performer schedule-performer-09">교사 6인</span>
+            <span class="schedule-performance-label schedule-performance-performer schedule-performer-10">???</span>
+            <span class="schedule-performance-label schedule-performance-performer schedule-performer-11">The stage</span>
+            <span class="schedule-performance-label schedule-performance-performer schedule-performer-12">교사 7인</span>
+          </div>
         </section>
       </div>
     `;
-
-    const image = document.getElementById('scheduleImage');
-    image.addEventListener('load', () => {
-      image.hidden = false;
-    });
-    image.addEventListener('error', () => {
-      image.remove();
-      document.getElementById('scheduleFallback').hidden = false;
-    });
   }
 
   async function handleLogin(event) {
@@ -997,8 +1145,10 @@
       });
 
       state.token = result.token;
+      state.me = result.user || null;
+      state.meLoadedAt = state.me ? Date.now() : 0;
       JSFes.setToken(JSFes.storageKeys.userToken, result.token);
-      await loadMe();
+      if (!state.me) await loadMe();
       const pendingAction = state.pendingStampAction;
       const targetRoute = state.pendingRoute && state.pendingRoute !== '/start'
         ? state.pendingRoute
@@ -1045,7 +1195,7 @@
     const sequence = ++renderSequence;
     const route = currentRoute();
     const hadBoothData = state.boothsLoaded;
-    if (route !== '/stamp' && route !== '/reward') {
+    if (route !== '/stamp') {
       state.pendingRoute = null;
     }
     window.scrollTo(0, 0);
@@ -1062,16 +1212,11 @@
       if (state.token && !state.me) routeDataTasks.push(loadMe().catch(() => null));
       await Promise.all(routeDataTasks);
 
-      if (state.token && state.me) {
-        recordActivity();
-      }
-
       if (sequence !== renderSequence || currentRoute() !== route) return;
 
       if (route === '/start') renderStart();
       if (route === '/map') await renderMap(sequence);
       if (route === '/stamp') await renderStamp(sequence);
-      if (route === '/reward') await renderReward(sequence);
       if (route === '/schedule') await renderSchedule();
 
       if (sequence !== renderSequence || currentRoute() !== route) return;
@@ -1096,6 +1241,8 @@
   logoutButton.addEventListener('click', () => {
     state.token = null;
     state.me = null;
+    state.meLoadedAt = 0;
+    state.activityLastSentAt = 0;
     JSFes.clearToken(JSFes.storageKeys.userToken);
     updateAuthState();
     JSFes.go('/start');
@@ -1103,6 +1250,9 @@
 
   document.addEventListener('click', handleRouteClick);
   document.addEventListener('click', handleUserNumberClick);
+  prizeDialog.addEventListener('click', (event) => {
+    if (event.target === prizeDialog) prizeDialog.close();
+  });
   document.addEventListener('pointerdown', recordActivity, { passive: true });
   document.addEventListener('keydown', recordActivity);
   window.addEventListener('popstate', render);
@@ -1117,7 +1267,4 @@
     void refreshDashboard();
   }, 30 * 1000);
 
-  window.setInterval(() => {
-    JSFes.apiFetch('/api/ping').catch(() => {});
-  }, 5 * 60 * 1000);
 })();

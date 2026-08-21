@@ -102,7 +102,7 @@ module.exports = async function gateway(req, res) {
 
     await route.handler(req, res);
   } catch (error) {
-    handleApiError(res, error);
+    await handleApiError(res, error);
   }
 };
 

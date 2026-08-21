@@ -22,6 +22,6 @@ module.exports = async function handler(req, res) {
     const result = await query(spec.sql);
     sendCsv(res, spec.fileName, spec.headers, result.rows);
   } catch (error) {
-    handleApiError(res, error);
+    await handleApiError(res, error);
   }
 };

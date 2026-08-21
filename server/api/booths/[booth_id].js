@@ -17,7 +17,7 @@ module.exports = async function handler(req, res) {
 
     if (req.method === 'GET') {
       const result = await query(
-        `SELECT booth_id, name, description, status, stamp_icon, floor_label, room_label, sort_order
+        `SELECT booth_id, code_number, name, description, status, stamp_icon, floor_label, room_label, sort_order
            FROM booths
           WHERE booth_id = $1`,
         [boothId]
@@ -83,7 +83,7 @@ module.exports = async function handler(req, res) {
             SET ${updates.join(', ')},
                 updated_at = NOW()
           WHERE booth_id = $${updateValues.length}
-          RETURNING booth_id, name, description, status, stamp_icon, floor_label, room_label, sort_order`,
+          RETURNING booth_id, code_number, name, description, status, stamp_icon, floor_label, room_label, sort_order`,
         updateValues
       );
 
@@ -117,6 +117,6 @@ module.exports = async function handler(req, res) {
       booth
     });
   } catch (error) {
-    handleApiError(res, error);
+    await handleApiError(res, error);
   }
 };

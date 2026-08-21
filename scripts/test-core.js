@@ -16,18 +16,37 @@ const { cleanText, isValidPassword, normalizeTagUid, parseUid } = require('../se
 const { getAllowedOrigin, getPrizePassword, getStampRequirement, positiveIntegerEnv, requiredSecret } = require('../server/api/_config');
 const { escapeCsvCell, toCsv } = require('../server/api/_csv');
 const { exportSpecs } = require('../server/api/_export_specs');
-const { makeRateKey, checkDbRateLimit } = require('../server/api/_rate_limit');
+const { makeGlobalRateKey, makeRateKey, checkDbRateLimit } = require('../server/api/_rate_limit');
 const { REWARD_CLAIM_METHODS, resolveRewardClaimMethod } = require('../server/api/_reward');
 const { resolveApi, resolveStatic } = require('./local-dev');
 const { bindStampImages, buildStampBoard, normalizeStampQueue, splitBoothName } = require('../public/js/common');
-const { requirePrize, signToken, verifyToken } = require('../server/api/_auth');
+const {
+  getPrizeCredentialVersion,
+  isTokenRevoked,
+  requirePrize,
+  signToken,
+  verifyToken
+} = require('../server/api/_auth');
 const { boothIdForCodeNumber, parseBoothText, planBoothIdRenames, planTagMappings } = require('./sync-booths');
-const { parseManagerLoginCode } = require('../server/api/_staff_credentials');
+const { parseManagerLoginCode, staffAccountIdForRole } = require('../server/api/_staff_credentials');
 const { STAMP_BOARD_SIZE, getRandomAvailableBoardSlot, insertStampInRandomSlot } = require('../server/api/_stamp_board');
 const { getUserProfile, loginUserWithProfile } = require('../server/api/_user_profile');
 const { resolveRoute: resolveVercelApiRoute } = require('../api/gateway');
+const { normalizedConnectionString } = require('../server/api/_db');
 
 const now = Date.UTC(2026, 7, 3, 12, 15, 0);
+assert.strictEqual(
+  normalizedConnectionString('postgresql://db.test/app?sslmode=require', true),
+  'postgresql://db.test/app?sslmode=verify-full'
+);
+assert.strictEqual(
+  normalizedConnectionString('postgresql://db.test/app?sslmode=require&x=1', false),
+  'postgresql://db.test/app?sslmode=no-verify&x=1'
+);
+assert.strictEqual(
+  normalizedConnectionString('postgresql://db.test/app?sslmode=verify-ca', true),
+  'postgresql://db.test/app?sslmode=verify-full'
+);
 const info = getTotpInfo('booth-101', now);
 assert.strictEqual(info.code.length, 4);
 assert.match(info.code, /^\d{4}$/);
@@ -35,6 +54,21 @@ assert.match(info.code, /^\d{4}$/);
 const verified = verifyTotpCode('booth-101', info.code, now);
 assert.strictEqual(verified.valid, true);
 assert.strictEqual(Number.isInteger(verified.timeStep), true);
+assert.strictEqual(
+  verifyTotpCode('booth-101', getTotpInfo('booth-101', now - 3600000).code, now).valid,
+  false
+);
+assert.strictEqual(
+  verifyTotpCode('booth-101', getTotpInfo('booth-101', now + 3600000).code, now).valid,
+  false
+);
+const boundary = Date.UTC(2026, 7, 3, 13, 0, 15);
+const previousBoundaryCode = getTotpInfo('booth-101', boundary - 3600000).code;
+assert.strictEqual(verifyTotpCode('booth-101', previousBoundaryCode, boundary).valid, true);
+assert.strictEqual(
+  verifyTotpCode('booth-101', previousBoundaryCode, boundary + 16000).valid,
+  false
+);
 
 const invalid = verifyTotpCode('booth-102', info.code, now);
 assert.strictEqual(invalid.valid, false);
@@ -137,8 +171,9 @@ async function testConfiguration() {
   process.env.ALLOWED_ORIGIN = 'https://example.com/path';
   assert.strictEqual(getAllowedOrigin(), 'https://example.com');
   process.env.ALLOWED_ORIGIN = 'javascript:alert(1)';
-  assert.strictEqual(getAllowedOrigin(), '*');
+  assert.strictEqual(getAllowedOrigin(), null);
   delete process.env.ALLOWED_ORIGIN;
+  assert.strictEqual(getAllowedOrigin(), null);
   delete process.env.PRIZE_PASSWORD;
   assert.strictEqual(getPrizePassword(), '0000');
   process.env.PRIZE_PASSWORD = '2468';
@@ -169,13 +204,14 @@ async function testStampBoard() {
   const insertDb = {
     async query(sql, params) {
       queries.push({ sql, params });
-      if (queries.length === 1) return { rows: [{ board_slot: 6 }] };
       return { rows: [{ id: 1, uid: 12, booth_id: 'booth-03', board_slot: 6 }] };
     }
   };
   const inserted = await insertStampInRandomSlot(insertDb, 12, 'booth-03');
   assert.strictEqual(inserted.board_slot, 6);
-  assert.deepStrictEqual(queries[1].params, [12, 'booth-03', 6]);
+  assert.strictEqual(queries.length, 1);
+  assert.match(queries[0].sql, /ORDER BY RANDOM\(\)/);
+  assert.deepStrictEqual(queries[0].params, [12, 'booth-03', 9]);
 
   const fullBoardDb = {
     async query() {
@@ -326,6 +362,7 @@ async function testRateLimit() {
   const key = makeRateKey(req, 'stamps:user:12');
   assert.match(key, /^stamps:user:12:[a-f0-9]{24}$/);
   assert.ok(!key.includes('203.0.113.10'));
+  assert.match(makeGlobalRateKey('auth:prize-login'), /^global:[a-f0-9]{24}$/);
 
   const res = {
     headers: {},
@@ -334,7 +371,7 @@ async function testRateLimit() {
   };
   const db = {
     async query() {
-      return { rows: [{ count: 11, reset_at: new Date(Date.now() + 30000) }] };
+      return { rows: [{ rate_key: key, count: 11, reset_at: new Date(Date.now() + 30000) }] };
     }
   };
   assert.strictEqual(await checkDbRateLimit(req, res, 'stamps:user:12', 10, 60000, db), false);
@@ -349,7 +386,7 @@ async function testRateLimit() {
   };
   const allowedDb = {
     async query() {
-      return { rows: [{ count: 3, reset_at: new Date(Date.now() + 30000) }] };
+      return { rows: [{ rate_key: key, count: 3, reset_at: new Date(Date.now() + 30000) }] };
     }
   };
   assert.strictEqual(await checkDbRateLimit(req, allowedRes, 'stamps:user:12', 10, 60000, allowedDb), true);
@@ -386,8 +423,21 @@ function testJwtClaims() {
     (error) => error.code === 'AUTH_REQUIRED'
   );
 
+  assert.strictEqual(
+    isTokenRevoked({ iat: 100 }, new Date(100900)),
+    false
+  );
+  assert.strictEqual(
+    isTokenRevoked({ iat: 99 }, new Date(100001)),
+    true
+  );
+
   const prizeToken = signToken(
-    { sub: 'prize:operator', role: 'prize' },
+    {
+      sub: 'prize:operator',
+      role: 'prize',
+      credential_version: getPrizeCredentialVersion()
+    },
     { expiresIn: '8h' }
   );
   const prizeResponse = {
@@ -400,6 +450,22 @@ function testJwtClaims() {
   );
   assert.strictEqual(prizeAuth.claims.role, 'prize');
   assert.ok(prizeAuth.claims.exp - prizeAuth.claims.iat <= 8 * 60 * 60);
+
+  process.env.PRIZE_PASSWORD = 'changed-password';
+  const revokedResponse = {
+    headers: {},
+    setHeader(name, value) { this.headers[name] = value; },
+    end(payload) { this.payload = payload; }
+  };
+  assert.strictEqual(
+    requirePrize(
+      { headers: { authorization: `Bearer ${prizeToken}` } },
+      revokedResponse
+    ),
+    null
+  );
+  assert.strictEqual(revokedResponse.statusCode, 401);
+  delete process.env.PRIZE_PASSWORD;
 }
 
 function testOfflineQueueIsolation() {
@@ -518,6 +584,12 @@ tag: 04:AB-CD EF`);
   });
   assert.strictEqual(parseManagerLoginCode('004821'), null);
   assert.strictEqual(parseManagerLoginCode('07482'), null);
+  assert.strictEqual(staffAccountIdForRole('admin'), 0);
+  assert.strictEqual(staffAccountIdForRole('manager', 1), 1);
+  assert.strictEqual(staffAccountIdForRole('manager', '20'), 20);
+  assert.strictEqual(staffAccountIdForRole('manager', 0), null);
+  assert.strictEqual(staffAccountIdForRole('manager', 100), null);
+  assert.strictEqual(staffAccountIdForRole('user', 1), null);
 }
 
 function testTagMappingPlan() {

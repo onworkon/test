@@ -48,7 +48,12 @@ function getMimeType(filePath) {
     '.png': 'image/png',
     '.jpg': 'image/jpeg',
     '.jpeg': 'image/jpeg',
-    '.svg': 'image/svg+xml; charset=utf-8'
+    '.webp': 'image/webp',
+    '.svg': 'image/svg+xml; charset=utf-8',
+    '.woff2': 'font/woff2',
+    '.woff': 'font/woff',
+    '.otf': 'font/otf',
+    '.ttf': 'font/ttf'
   }[ext] || 'application/octet-stream';
 }
 
@@ -85,7 +90,7 @@ function serveFile(req, res, filePath) {
 
 function resolveStatic(pathname) {
   if (pathname === '/') return join(publicDir, 'index.html');
-  if (['/start', '/map', '/stamp', '/reward', '/schedule'].includes(pathname)) {
+  if (['/start', '/map', '/stamp', '/schedule'].includes(pathname)) {
     return join(publicDir, 'user.html');
   }
   if (pathname === '/manager') return join(publicDir, 'manager.html');
@@ -219,6 +224,13 @@ async function handleRequest(req, res) {
   if (!['GET', 'HEAD'].includes(req.method)) {
     res.setHeader('Allow', 'GET, HEAD');
     sendText(res, 405, 'Method not allowed');
+    return;
+  }
+
+  if (pathname === '/' || pathname === '/reward') {
+    res.statusCode = 307;
+    res.setHeader('Location', pathname === '/' ? '/start' : '/stamp');
+    res.end();
     return;
   }
 

@@ -9,9 +9,14 @@ const {
   handleApiError,
   httpError
 } = require('./_http');
-const { checkDbRateLimit } = require('./_rate_limit');
+const {
+  checkDbRateLimits,
+  makeGlobalRateKey,
+  makeRateKey
+} = require('./_rate_limit');
 const { cleanText, normalizeTagUid } = require('./_security');
 const { insertStampInRandomSlot } = require('./_stamp_board');
+const { getUserProfile } = require('./_user_profile');
 
 module.exports = async function handler(req, res) {
   if (!allowMethods(req, res, ['POST'])) return;
@@ -19,8 +24,6 @@ module.exports = async function handler(req, res) {
   try {
     const auth = await requireUser(req, res);
     if (!auth) return;
-
-    if (!(await checkDbRateLimit(req, res, `stamps:user:${auth.user.uid}`))) return;
 
     const body = await readJson(req);
     const type = cleanText(body.type, 20);
@@ -46,6 +49,20 @@ module.exports = async function handler(req, res) {
         return;
       }
     }
+
+    const rateRules = [{
+      rateKey: makeRateKey(req, `stamps:user:${auth.user.uid}`),
+      limit: 10,
+      windowMs: 60000
+    }];
+    if (compositeTotp) {
+      rateRules.push({
+        rateKey: makeGlobalRateKey(`stamps:totp:${compositeTotp.codeNumber}`),
+        limit: 300,
+        windowMs: 5 * 60 * 1000
+      });
+    }
+    if (!(await checkDbRateLimits(res, rateRules))) return;
 
     const booth = await transaction(async (client) => {
       const userResult = await client.query(
@@ -81,16 +98,16 @@ module.exports = async function handler(req, res) {
         boothId = tag.booth_id;
 
         const boothResult = await client.query(
-          'SELECT booth_id, name, status, stamp_icon FROM booths WHERE booth_id = $1 FOR UPDATE',
+          'SELECT booth_id, name, status, stamp_icon FROM booths WHERE booth_id = $1 FOR SHARE',
           [boothId]
         );
         currentBooth = boothResult.rows[0];
       } else {
         const boothResult = await client.query(
           `SELECT booth_id, name, status, stamp_icon, code_generation
-             FROM booths
+            FROM booths
             WHERE code_number = $1
-              FOR UPDATE`,
+              FOR SHARE`,
           [compositeTotp.codeNumber]
         );
         currentBooth = boothResult.rows[0];
@@ -117,14 +134,6 @@ module.exports = async function handler(req, res) {
       }
       if (currentBooth.status !== 'open') {
         throw httpError(409, 'BOOTH_CLOSED', 'Booth is not accepting stamps');
-      }
-
-      const existing = await client.query(
-        'SELECT 1 FROM stamps WHERE uid = $1 AND booth_id = $2',
-        [auth.user.uid, boothId]
-      );
-      if (existing.rows.length > 0) {
-        throw httpError(409, 'ALREADY_STAMPED', 'This booth is already stamped');
       }
 
       if (type === 'totp') {
@@ -157,7 +166,8 @@ module.exports = async function handler(req, res) {
 
       return {
         ...currentBooth,
-        board_slot: savedStamp.board_slot
+        board_slot: savedStamp.board_slot,
+        user: await getUserProfile(client, user)
       };
     });
 
@@ -166,9 +176,10 @@ module.exports = async function handler(req, res) {
       message: 'Stamp saved',
       booth_id: booth.booth_id,
       stamp_icon: booth.stamp_icon,
-      board_slot: booth.board_slot
+      board_slot: booth.board_slot,
+      user: booth.user
     });
   } catch (error) {
-    handleApiError(res, error);
+    await handleApiError(res, error);
   }
 };

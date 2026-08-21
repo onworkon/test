@@ -8,12 +8,13 @@ module.exports = async function handler(req, res) {
     const result = await query(
       `SELECT
         (SELECT COUNT(*)::int FROM booths WHERE status = 'open') AS "activeBooths",
-        (SELECT COUNT(*)::int FROM users) AS "totalVisitors",
         (SELECT COUNT(*)::int FROM users WHERE last_active >= NOW() - INTERVAL '5 minutes') AS "onlineUsers"`
     );
 
-    sendJson(res, 200, result.rows[0]);
+    sendJson(res, 200, result.rows[0], {
+      cacheControl: 'public, s-maxage=15, stale-while-revalidate=15'
+    });
   } catch (error) {
-    handleApiError(res, error);
+    await handleApiError(res, error);
   }
 };

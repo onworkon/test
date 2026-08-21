@@ -11,6 +11,6 @@ module.exports = async function handler(req, res) {
 
     sendJson(res, 200, await getReadiness());
   } catch (error) {
-    handleApiError(res, error);
+    await handleApiError(res, error);
   }
 };

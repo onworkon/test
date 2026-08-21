@@ -85,37 +85,39 @@
   }
 
   async function loadAdminCoreData() {
+    const requestedToken = state.token;
     const [stats, booths] = await Promise.all([
-      JSFes.apiFetch('/api/admin/stats', { token: state.token }),
-      JSFes.apiFetch('/api/booths')
+      JSFes.apiFetch('/api/admin/stats', { token: requestedToken }),
+      JSFes.apiFetch('/api/booths?include_counts=1')
     ]);
 
+    if (requestedToken !== state.token) return false;
     state.stats = stats;
     state.booths = booths.booths || [];
+    return true;
   }
 
   async function loadAdminSupplementalData() {
+    const requestedToken = state.token;
     const [logs, readiness, tags] = await Promise.all([
-      JSFes.apiFetch('/api/admin/logs', { token: state.token }),
-      JSFes.apiFetch('/api/admin/readiness', { token: state.token }),
-      JSFes.apiFetch('/api/admin/tags', { token: state.token })
+      JSFes.apiFetch('/api/admin/logs', { token: requestedToken }),
+      JSFes.apiFetch('/api/admin/readiness', { token: requestedToken }),
+      JSFes.apiFetch('/api/admin/tags', { token: requestedToken })
     ]);
 
+    if (requestedToken !== state.token) return false;
     state.logs = logs.logs || [];
     state.readiness = readiness;
     state.tags = tags.tags || [];
     state.supplementalLoaded = true;
-  }
-
-  async function loadAdminData() {
-    await Promise.all([loadAdminCoreData(), loadAdminSupplementalData()]);
+    return true;
   }
 
   async function refreshAdminSupplementalData() {
     const requestedToken = state.token;
     try {
-      await loadAdminSupplementalData();
-      if (requestedToken !== state.token) return;
+      const applied = await loadAdminSupplementalData();
+      if (!applied || requestedToken !== state.token) return;
       updateStatsDom();
     } catch (error) {
       if (JSFes.isAuthError(error)) {
@@ -135,7 +137,7 @@
     }
 
     try {
-      await loadAdminCoreData();
+      if (!(await loadAdminCoreData())) return;
       document.body.classList.remove('staff-login-mode');
       updateStateLabel();
 
@@ -429,8 +431,7 @@
       if (state.polling) return;
       state.polling = true;
       try {
-        await loadAdminData();
-        updateStatsDom();
+        if (await loadAdminCoreData()) updateStatsDom();
       } catch (error) {
         if (JSFes.isAuthError(error)) {
           clearSession();

@@ -2,7 +2,12 @@ const bcrypt = require('bcryptjs');
 const { query } = require('../_db');
 const { signToken } = require('../_auth');
 const { allowMethods, readJson, sendJson, sendError, handleApiError } = require('../_http');
-const { checkDbRateLimit } = require('../_rate_limit');
+const {
+  checkDbRateLimit,
+  checkDbRateLimits,
+  makeGlobalRateKey,
+  makeRateKey
+} = require('../_rate_limit');
 const { cleanText } = require('../_security');
 const { parseManagerLoginCode } = require('../_staff_credentials');
 const { getCompositeTotpInfo } = require('../_totp');
@@ -50,8 +55,24 @@ module.exports = async function handler(req, res) {
           LIMIT 1`
       );
     } else {
-      if (!(await checkDbRateLimit(req, res, 'auth:staff-login:manager', 30))) return;
-      if (!(await checkDbRateLimit(req, res, `auth:staff-login:manager-booth:${managerLogin.codeNumber}`, 5))) return;
+      const boothScope = `auth:staff-login:manager-booth:${managerLogin.codeNumber}`;
+      if (!(await checkDbRateLimits(res, [
+        {
+          rateKey: makeRateKey(req, 'auth:staff-login:manager'),
+          limit: 30,
+          windowMs: 60000
+        },
+        {
+          rateKey: makeRateKey(req, boothScope),
+          limit: 5,
+          windowMs: 60000
+        },
+        {
+          rateKey: makeGlobalRateKey(boothScope),
+          limit: 50,
+          windowMs: 5 * 60 * 1000
+        }
+      ]))) return;
       result = await query(
         `SELECT staff.id,
                 staff.role,
@@ -122,6 +143,6 @@ module.exports = async function handler(req, res) {
 
     sendJson(res, 200, response);
   } catch (error) {
-    handleApiError(res, error);
+    await handleApiError(res, error);
   }
 };

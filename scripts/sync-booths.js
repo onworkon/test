@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const { loadEnv } = require('./_env');
 const { createPool } = require('./_db');
 const { normalizeTagUid } = require('../server/api/_security');
+const { staffAccountIdForRole } = require('../server/api/_staff_credentials');
 
 const projectRoot = join(__dirname, '..');
 const defaultInputPath = join(projectRoot, '..', 'booth.txt');
@@ -314,6 +315,13 @@ async function syncBooths(pool, records, options = {}) {
       });
 
       const existingManager = managersByBooth.get(boothId);
+      const staffAccountId = staffAccountIdForRole('manager', record.codeNumber);
+
+      if (existingManager && Number(existingManager.id) !== staffAccountId) {
+        throw new Error(
+          `Manager account ID for ${boothId} must be ${staffAccountId}; run database migrations first`
+        );
+      }
 
       if (existingManager && await bcrypt.compare(record.managerPassword, existingManager.password_hash)) {
         managerAccounts.push({ booth_id: boothId, action: 'unchanged' });
@@ -334,9 +342,9 @@ async function syncBooths(pool, records, options = {}) {
         managerAccounts.push({ booth_id: boothId, action: 'update' });
       } else {
         await client.query(
-          `INSERT INTO staff_accounts (role, booth_id, password_hash)
-           VALUES ('manager', $1, $2)`,
-          [boothId, passwordHash]
+          `INSERT INTO staff_accounts (id, role, booth_id, password_hash)
+           VALUES ($1, 'manager', $2, $3)`,
+          [staffAccountId, boothId, passwordHash]
         );
         managerAccounts.push({ booth_id: boothId, action: 'insert' });
       }

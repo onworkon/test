@@ -4,7 +4,7 @@ const { Readable } = require('stream');
 process.env.JWT_SECRET = 'test-jwt-secret-at-least-32-characters';
 
 const { allowMethods, readJson, sendError, handleApiError } = require('../server/api/_http');
-const { signToken } = require('../server/api/_auth');
+const { getPrizeCredentialVersion, signToken } = require('../server/api/_auth');
 const prizeSessionHandler = require('../server/api/auth/prize-session');
 
 function makeReq(method, body) {
@@ -90,13 +90,13 @@ async function testReadJson() {
   );
 }
 
-function testHandleApiError() {
+async function testHandleApiError() {
   const res = makeRes();
   const error = new Error('Nope');
   error.statusCode = 418;
   error.code = 'TEAPOT';
 
-  handleApiError(res, error);
+  await handleApiError(res, error);
   assert.strictEqual(res.statusCode, 418);
   assert.match(res.body, /TEAPOT/);
 }
@@ -121,7 +121,11 @@ async function testPrizeSession() {
   assert.match(missingRes.body, /AUTH_REQUIRED/);
 
   const validToken = signToken(
-    { sub: 'prize:operator', role: 'prize' },
+    {
+      sub: 'prize:operator',
+      role: 'prize',
+      credential_version: getPrizeCredentialVersion()
+    },
     { expiresIn: '8h' }
   );
   const validReq = makeReq('GET');
@@ -143,7 +147,11 @@ async function testPrizeSession() {
   assert.match(wrongRoleRes.body, /FORBIDDEN/);
 
   const expiredToken = signToken(
-    { sub: 'prize:operator', role: 'prize' },
+    {
+      sub: 'prize:operator',
+      role: 'prize',
+      credential_version: getPrizeCredentialVersion()
+    },
     { expiresIn: -1 }
   );
   const expiredReq = makeReq('GET');
@@ -157,7 +165,7 @@ async function testPrizeSession() {
 async function main() {
   await testAllowMethods();
   await testReadJson();
-  testHandleApiError();
+  await testHandleApiError();
   testErrorShape();
   await testPrizeSession();
   console.log('HTTP helper tests passed.');

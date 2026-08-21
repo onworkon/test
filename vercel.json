@@ -1,12 +1,14 @@
 {
   "regions": ["sin1"],
+  "redirects": [
+    { "source": "/", "destination": "/start", "permanent": false },
+    { "source": "/reward", "destination": "/stamp", "permanent": false }
+  ],
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/gateway?path=:path*" },
-    { "source": "/", "destination": "/index.html" },
     { "source": "/start", "destination": "/user.html" },
     { "source": "/map", "destination": "/user.html" },
     { "source": "/stamp", "destination": "/user.html" },
-    { "source": "/reward", "destination": "/user.html" },
     { "source": "/schedule", "destination": "/user.html" },
     { "source": "/manager", "destination": "/manager.html" },
     { "source": "/admin", "destination": "/admin.html" },

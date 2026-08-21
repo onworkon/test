@@ -1,7 +1,15 @@
 const { Pool } = require('pg');
+const { attachDatabasePool } = require('@vercel/functions');
 const { getPoolMax } = require('./_config');
 
 let pool;
+
+function normalizedConnectionString(connectionString, rejectUnauthorized) {
+  return connectionString.replace(
+    /([?&])sslmode=(prefer|require|verify-ca)(?=(&|$))/i,
+    `$1sslmode=${rejectUnauthorized ? 'verify-full' : 'no-verify'}`
+  );
+}
 
 function getPool() {
   if (!pool) {
@@ -14,19 +22,22 @@ function getPool() {
       throw error;
     }
 
+    const rejectUnauthorized = process.env.PGSSL_REJECT_UNAUTHORIZED !== 'false';
+    const sslMode = String(process.env.PGSSLMODE || '').trim().toLowerCase();
     const needsSsl =
-      process.env.PGSSLMODE === 'require' ||
-      connectionString.includes('sslmode=require');
+      ['require', 'verify-ca', 'verify-full'].includes(sslMode) ||
+      /[?&]sslmode=(require|verify-ca|verify-full)(?:&|$)/i.test(connectionString);
 
     pool = new Pool({
-      connectionString,
+      connectionString: normalizedConnectionString(connectionString, rejectUnauthorized),
       ssl: needsSsl
-        ? { rejectUnauthorized: process.env.PGSSL_REJECT_UNAUTHORIZED !== 'false' }
+        ? { rejectUnauthorized }
         : undefined,
       max: getPoolMax(),
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 5000
     });
+    if (process.env.VERCEL) attachDatabasePool(pool);
   }
 
   return pool;
@@ -57,6 +68,7 @@ async function transaction(callback) {
 }
 
 module.exports = {
+  normalizedConnectionString,
   query,
   transaction
 };

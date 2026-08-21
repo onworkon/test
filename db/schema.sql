@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS booths (
   room_label TEXT NOT NULL DEFAULT '',
   sort_order INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT booths_code_number_booth_id_unique UNIQUE (code_number, booth_id)
 );
 
 CREATE TABLE IF NOT EXISTS users (
@@ -48,9 +49,9 @@ CREATE TABLE IF NOT EXISTS stamps (
 );
 
 CREATE TABLE IF NOT EXISTS staff_accounts (
-  id SERIAL PRIMARY KEY,
+  id SMALLINT PRIMARY KEY,
   role TEXT NOT NULL CHECK (role IN ('manager', 'admin')),
-  booth_id TEXT REFERENCES booths(booth_id) ON UPDATE CASCADE,
+  booth_id TEXT,
   password_hash TEXT NOT NULL,
   token_revoked_at TIMESTAMPTZ NOT NULL DEFAULT '1970-01-01 00:00:00+00',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -59,7 +60,16 @@ CREATE TABLE IF NOT EXISTS staff_accounts (
     (role = 'admin' AND booth_id IS NULL)
     OR
     (role = 'manager' AND booth_id IS NOT NULL)
-  )
+  ),
+  CONSTRAINT staff_accounts_role_id_check CHECK (
+    (role = 'admin' AND id = 0)
+    OR
+    (role = 'manager' AND id BETWEEN 1 AND 99)
+  ),
+  CONSTRAINT staff_accounts_booth_code_fkey
+    FOREIGN KEY (id, booth_id)
+    REFERENCES booths(code_number, booth_id)
+    ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS tag_maps (
@@ -85,7 +95,7 @@ CREATE TABLE IF NOT EXISTS notices (
 
 CREATE TABLE IF NOT EXISTS operation_logs (
   id SERIAL PRIMARY KEY,
-  staff_account_id INTEGER REFERENCES staff_accounts(id) ON DELETE SET NULL,
+  staff_account_id SMALLINT REFERENCES staff_accounts(id) ON UPDATE CASCADE ON DELETE SET NULL,
   actor_role TEXT NOT NULL,
   actor_booth_id TEXT,
   action TEXT NOT NULL,

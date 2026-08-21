@@ -60,10 +60,12 @@ async function getReadiness(db = { query }) {
     checks,
     'allowed_origin',
     'ALLOWED_ORIGIN',
-    allowedOrigin !== '*',
-    allowedOrigin !== '*'
+    Boolean(allowedOrigin) && allowedOrigin !== '*',
+    allowedOrigin && allowedOrigin !== '*'
       ? allowedOrigin
-      : 'wildcard; set the production site origin when possible',
+      : allowedOrigin === '*'
+        ? 'wildcard; set the production site origin when possible'
+        : 'missing or invalid; cross-origin requests are disabled',
     true
   );
   addCheck(
@@ -91,6 +93,13 @@ async function getReadiness(db = { query }) {
       (SELECT COUNT(DISTINCT booth_id)::int FROM tag_maps) AS mapped_tag_booths,
       (SELECT COUNT(*)::int FROM staff_accounts WHERE role = 'admin') AS admins,
       (SELECT COUNT(*)::int FROM staff_accounts WHERE role = 'manager') AS managers,
+      (SELECT COUNT(*)::int FROM staff_accounts) AS staff_accounts,
+      (SELECT COUNT(*)::int
+         FROM staff_accounts AS staff
+         LEFT JOIN booths AS booth ON booth.booth_id = staff.booth_id
+        WHERE (staff.role = 'admin' AND staff.id = 0)
+           OR (staff.role = 'manager' AND staff.id = booth.code_number)
+      ) AS canonical_staff_ids,
       (SELECT COUNT(*)::int FROM stamps) AS stamps,
       (SELECT COUNT(board_slot)::int FROM stamps) AS slotted_stamps,
       (SELECT COUNT(*)::int FROM (
@@ -162,6 +171,13 @@ async function getReadiness(db = { query }) {
     true
   );
   addCheck(checks, 'admin_account', '관리자 계정', row.admins >= 1, `${row.admins}개`);
+  addCheck(
+    checks,
+    'staff_account_ids',
+    '직원 계정 ID',
+    row.canonical_staff_ids === row.staff_accounts,
+    `${row.canonical_staff_ids}/${row.staff_accounts}개 일치`
+  );
   addCheck(
     checks,
     'manager_accounts',

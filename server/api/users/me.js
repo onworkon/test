@@ -12,6 +12,6 @@ module.exports = async function handler(req, res) {
 
     sendJson(res, 200, await getUserProfile({ query }, auth.user));
   } catch (error) {
-    handleApiError(res, error);
+    await handleApiError(res, error);
   }
 };

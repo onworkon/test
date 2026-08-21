@@ -19,17 +19,23 @@ async function getRandomAvailableBoardSlot(db, uid) {
 }
 
 async function insertStampInRandomSlot(db, uid, boothId) {
-  const boardSlot = await getRandomAvailableBoardSlot(db, uid);
-  if (boardSlot === null) return null;
-
   const result = await db.query(
     `INSERT INTO stamps (uid, booth_id, board_slot)
-     VALUES ($1, $2, $3)
+     SELECT $1, $2, candidate.slot::smallint
+       FROM generate_series(0, $3::int - 1) AS candidate(slot)
+      WHERE NOT EXISTS (
+        SELECT 1
+          FROM stamps
+         WHERE uid = $1
+           AND board_slot = candidate.slot
+      )
+      ORDER BY RANDOM()
+      LIMIT 1
      RETURNING id, uid, booth_id, board_slot, stamped_at`,
-    [uid, boothId, boardSlot]
+    [uid, boothId, STAMP_BOARD_SIZE]
   );
 
-  return result.rows[0];
+  return result.rows[0] || null;
 }
 
 module.exports = {

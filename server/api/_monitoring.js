@@ -31,6 +31,18 @@ function captureException(error, context = {}) {
   });
 }
 
+async function flushMonitoring(timeoutMs = 1500) {
+  const client = getSentry();
+  if (!client) return true;
+  try {
+    return await client.flush(timeoutMs);
+  } catch (error) {
+    console.error('Sentry flush failed', error);
+    return false;
+  }
+}
+
 module.exports = {
-  captureException
+  captureException,
+  flushMonitoring
 };

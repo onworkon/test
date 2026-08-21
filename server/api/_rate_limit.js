@@ -6,7 +6,7 @@ const { captureException } = require('./_monitoring');
 let lastCleanupAt = 0;
 
 function getClientIp(req) {
-  const forwarded = req.headers['x-forwarded-for'];
+  const forwarded = req.headers['x-vercel-forwarded-for'] || req.headers['x-forwarded-for'];
   if (typeof forwarded === 'string' && forwarded.trim()) {
     return forwarded.split(',')[0].trim();
   }
@@ -29,30 +29,58 @@ function makeRateKey(req, keyPrefix) {
   return `${scope}:${ipDigest}`;
 }
 
-async function checkDbRateLimit(req, res, keyPrefix, limit = 10, windowMs = 60000, db = { query }) {
-  const rateKey = makeRateKey(req, keyPrefix);
+function makeGlobalRateKey(keyPrefix) {
+  const scopeDigest = crypto
+    .createHash('sha256')
+    .update(String(keyPrefix || 'request'))
+    .digest('hex')
+    .slice(0, 24);
+  return `global:${scopeDigest}`;
+}
+
+async function consumeDbRateLimits(rules, db = { query }) {
   const result = await db.query(
-    `INSERT INTO rate_limits (rate_key, count, reset_at, updated_at)
-     VALUES ($1, 1, NOW() + ($2::int * INTERVAL '1 millisecond'), NOW())
+    `WITH rules(rate_key, window_ms) AS (
+       SELECT *
+         FROM UNNEST($1::text[], $2::int[])
+     )
+     INSERT INTO rate_limits AS stored (rate_key, count, reset_at, updated_at)
+     SELECT rate_key,
+            1,
+            NOW() + (window_ms * INTERVAL '1 millisecond'),
+            NOW()
+       FROM rules
      ON CONFLICT (rate_key) DO UPDATE SET
        count = CASE
-         WHEN rate_limits.reset_at <= NOW() THEN 1
-         ELSE LEAST(rate_limits.count + 1, 2147483647)
+         WHEN stored.reset_at <= NOW() THEN 1
+         ELSE LEAST(stored.count + 1, 2147483647)
        END,
        reset_at = CASE
-         WHEN rate_limits.reset_at <= NOW() THEN NOW() + ($2::int * INTERVAL '1 millisecond')
-         ELSE rate_limits.reset_at
+         WHEN stored.reset_at <= NOW() THEN EXCLUDED.reset_at
+         ELSE stored.reset_at
        END,
        updated_at = NOW()
-     RETURNING count, reset_at`,
-    [rateKey, windowMs]
+     RETURNING rate_key, count, reset_at`,
+    [rules.map((rule) => rule.rateKey), rules.map((rule) => rule.windowMs)]
   );
 
-  const bucket = result.rows[0];
-  const allowed = applyRateLimitBucket(res, bucket, limit);
+  return new Map(result.rows.map((row) => [row.rate_key, row]));
+}
+
+async function checkDbRateLimits(res, rules, db = { query }) {
+  const buckets = await consumeDbRateLimits(rules, db);
+  for (const rule of rules) {
+    const bucket = buckets.get(rule.rateKey);
+    if (!bucket || !applyRateLimitBucket(res, bucket, rule.limit)) return false;
+  }
 
   if (db.query === query) maybeCleanupExpiredRateLimits();
-  return allowed;
+  return true;
+}
+
+async function checkDbRateLimit(req, res, keyPrefix, limit = 10, windowMs = 60000, db = { query }) {
+  const rateKey = makeRateKey(req, keyPrefix);
+  return checkDbRateLimits(res, [{ rateKey, limit, windowMs }], db);
 }
 
 function applyRateLimitBucket(res, bucket, limit) {
@@ -92,7 +120,10 @@ function maybeCleanupExpiredRateLimits() {
 module.exports = {
   getClientIp,
   makeRateKey,
+  makeGlobalRateKey,
   checkDbRateLimit,
+  checkDbRateLimits,
+  consumeDbRateLimits,
   applyRateLimitBucket,
   maybeCleanupExpiredRateLimits,
   cleanupExpiredRateLimits

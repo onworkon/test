@@ -180,6 +180,6 @@ module.exports = async function handler(req, res) {
       user
     });
   } catch (error) {
-    handleApiError(res, error);
+    await handleApiError(res, error);
   }
 };

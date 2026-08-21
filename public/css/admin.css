@@ -1019,12 +1019,21 @@
   padding: 0 8px;
   background: #fff;
   color: #141932;
-  font-size: 10px;
+  font-family: "A2Z", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  font-size: 14pt;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
   text-align: center;
 }
 
 .prize-lookup-form input::placeholder {
   color: rgba(20, 25, 50, 0.45);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  text-align: center;
 }
 
 .prize-lookup-form button {
@@ -1247,14 +1256,15 @@
 .prize-confirm-card p {
   position: absolute;
   top: 79px;
-  left: 54px;
-  width: 172px;
+  left: 12px;
+  width: 256px;
   height: 36px;
   margin: 0;
   color: rgba(20, 25, 50, 0.65);
   font-size: 12px;
   line-height: 18px;
   text-align: center;
+  white-space: nowrap;
 }
 
 .prize-confirm-button {

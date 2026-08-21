@@ -15,8 +15,10 @@ module.exports = async function handler(req, res) {
 
     sendJson(res, 200, {
       notice: result.rows[0] || null
+    }, {
+      cacheControl: 'public, s-maxage=10, stale-while-revalidate=20'
     });
   } catch (error) {
-    handleApiError(res, error);
+    await handleApiError(res, error);
   }
 };

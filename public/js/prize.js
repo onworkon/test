@@ -8,7 +8,8 @@
     authenticated: false,
     user: null,
     offlineConfirmed: false,
-    claiming: false
+    claiming: false,
+    lookupRequest: 0
   };
 
   function updateStateLabel() {
@@ -30,6 +31,7 @@
     state.user = null;
     state.offlineConfirmed = false;
     state.claiming = false;
+    state.lookupRequest += 1;
     JSFes.clearToken(JSFes.storageKeys.prizeToken);
     updateStateLabel();
   }
@@ -118,7 +120,7 @@
         <dialog id="prizeConfirmDialog" class="prize-confirm-dialog" aria-labelledby="prizeConfirmTitle" aria-describedby="prizeConfirmDescription">
           <section class="prize-confirm-card">
             <h2 id="prizeConfirmTitle">상품을 지급하시겠습니까?</h2>
-            <p id="prizeConfirmDescription">화면-팔찌 번호 대조 및 적립 방식<br>확인 후 지급해 주세요</p>
+            <p id="prizeConfirmDescription">화면-팔찌 번호 대조 및 적립 방식을<br>확인하신 후 지급해 주세요.</p>
             <button id="prizeConfirmButton" class="prize-confirm-button" type="button">확인</button>
             <button class="prize-confirm-close" type="button" aria-label="상품 지급 확인 팝업 닫기"></button>
           </section>
@@ -201,13 +203,18 @@
     event.preventDefault();
     const form = event.currentTarget;
     const uid = String(new FormData(form).get('uid') || '').trim();
+    const button = form.querySelector('[type="submit"]');
+    const requestedToken = state.token;
+    const request = ++state.lookupRequest;
     state.offlineConfirmed = false;
+    button.disabled = true;
     setMessage('조회 중입니다.');
 
     try {
       const result = await JSFes.apiFetch(`/api/prize/user?uid=${encodeURIComponent(uid)}`, {
-        token: state.token
+        token: requestedToken
       });
+      if (request !== state.lookupRequest || requestedToken !== state.token) return;
       state.user = result.user;
       renderUserResult();
       setMessage(
@@ -215,10 +222,11 @@
           ? '이미 상품 지급이 완료된 팔찌입니다.'
           : state.user.eligible
             ? '전자 스탬프로 상품 지급이 가능합니다.'
-            : '전자 스탬프는 미충족입니다. 종이 리플렛을 확인하면 지급할 수 있습니다.',
+            : '',
         state.user.eligible ? 'success' : ''
       );
     } catch (error) {
+      if (request !== state.lookupRequest || requestedToken !== state.token) return;
       if (JSFes.isAuthError(error)) {
         clearSession();
         renderLogin();
@@ -228,6 +236,8 @@
       state.user = null;
       renderUserResult();
       setMessage(error.message, 'error');
+    } finally {
+      if (request === state.lookupRequest && button.isConnected) button.disabled = false;
     }
   }
 
@@ -235,7 +245,7 @@
     if (!canClaimReward() || state.claiming) return;
     document.getElementById('prizeConfirmDescription').innerHTML = state.offlineConfirmed
       ? '종이 리플렛 적립 및 팔찌 번호를<br>확인한 후 지급해 주세요'
-      : '화면-팔찌 번호 대조 및 적립 방식을<br>확인한 후 지급해 주세요';
+      : '화면-팔찌 번호 대조 및 적립 방식을<br>확인하신 후 지급해 주세요.';
     document.getElementById('prizeConfirmDialog').showModal();
   }
 
@@ -248,6 +258,9 @@
     if (!canClaimReward() || state.claiming) return;
 
     const confirmButton = document.getElementById('prizeConfirmButton');
+    const requestedToken = state.token;
+    const requestedUid = state.user.uid;
+    const offlineConfirmed = state.offlineConfirmed;
     state.claiming = true;
     if (confirmButton) confirmButton.disabled = true;
     syncActionState();
@@ -256,12 +269,13 @@
     try {
       const result = await JSFes.apiFetch('/api/reward/claim', {
         method: 'POST',
-        token: state.token,
+        token: requestedToken,
         body: {
-          uid: state.user.uid,
-          offline_confirmed: state.offlineConfirmed
+          uid: requestedUid,
+          offline_confirmed: offlineConfirmed
         }
       });
+      if (state.token !== requestedToken || state.user?.uid !== requestedUid) return;
       state.user = {
         ...state.user,
         ...result.user,

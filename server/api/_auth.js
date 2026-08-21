@@ -1,6 +1,7 @@
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { query } = require('./_db');
-const { requiredSecret } = require('./_config');
+const { requiredSecret, getPrizePassword } = require('./_config');
 const { sendError, httpError } = require('./_http');
 
 const TOKEN_CLAIMS = {
@@ -56,8 +57,15 @@ function handleTokenError(res, error) {
 function isTokenRevoked(claims, revokedAt) {
   if (!claims.iat || !revokedAt) return false;
   const issuedAtMs = claims.iat * 1000;
-  const revokedAtMs = new Date(revokedAt).getTime();
+  const revokedAtMs = Math.floor(new Date(revokedAt).getTime() / 1000) * 1000;
   return issuedAtMs < revokedAtMs;
+}
+
+function getPrizeCredentialVersion() {
+  return crypto
+    .createHmac('sha256', requiredSecret('JWT_SECRET'))
+    .update(`prize:${getPrizePassword()}`)
+    .digest('base64url');
 }
 
 async function requireUser(req, res) {
@@ -79,8 +87,21 @@ async function requireUser(req, res) {
   }
 
   const result = await query(
-    'SELECT uid, reward_claimed, token_revoked_at FROM users WHERE uid = $1',
-    [claims.uid]
+    `UPDATE users
+        SET last_active = CASE
+          WHEN token_revoked_at IS NULL
+            OR $2::bigint >= FLOOR(EXTRACT(EPOCH FROM token_revoked_at))::bigint
+          THEN NOW()
+          ELSE last_active
+        END
+      WHERE uid = $1
+      RETURNING uid,
+                reward_claimed,
+                token_revoked_at,
+                token_revoked_at IS NULL
+                  OR $2::bigint >= FLOOR(EXTRACT(EPOCH FROM token_revoked_at))::bigint
+                  AS token_valid`,
+    [claims.uid, claims.iat]
   );
 
   const user = result.rows[0];
@@ -89,12 +110,11 @@ async function requireUser(req, res) {
     return null;
   }
 
-  if (isTokenRevoked(claims, user.token_revoked_at)) {
+  if (!user.token_valid) {
     sendError(res, 401, 'AUTH_REVOKED', 'Token has been revoked');
     return null;
   }
 
-  await touchLastActive(user.uid);
   return { claims, user };
 }
 
@@ -156,23 +176,20 @@ function requirePrize(req, res) {
     return null;
   }
 
-  return { claims };
-}
+  if (claims.credential_version !== getPrizeCredentialVersion()) {
+    sendError(res, 401, 'AUTH_REVOKED', 'Prize operator token has been revoked');
+    return null;
+  }
 
-async function touchLastActive(uid) {
-  await query(
-    `UPDATE users
-        SET last_active = NOW()
-      WHERE uid = $1`,
-    [uid]
-  );
+  return { claims };
 }
 
 module.exports = {
   signToken,
+  getPrizeCredentialVersion,
+  isTokenRevoked,
   verifyToken,
   requireUser,
   requireStaff,
-  requirePrize,
-  touchLastActive
+  requirePrize
 };

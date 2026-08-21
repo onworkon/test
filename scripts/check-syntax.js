@@ -68,6 +68,12 @@ for (const file of projectFiles.filter((path) => path.endsWith('.css'))) {
   if (opening !== closing) {
     throw new Error(`CSS braces are unbalanced: ${file}`);
   }
+  for (const match of css.matchAll(/url\(["']?(\/(?:assets)\/[^)'"?#]+)["']?\)/g)) {
+    const assetPath = join(root, 'public', ...match[1].slice(1).split('/'));
+    if (!existsSync(assetPath)) {
+      throw new Error(`Referenced CSS asset does not exist: ${match[1]} (${file})`);
+    }
+  }
 }
 
 const browserJavaScript = projectFiles

@@ -12,6 +12,7 @@
     booth: null,
     totp: null,
     ticker: null,
+    totpRetryTimer: null,
     totpRefreshing: false,
     pendingStatus: null
   };
@@ -29,6 +30,17 @@
   function totpEntryCode() {
     const source = state.totp?.entryCode || state.totp?.displayCode || state.totp?.code || '';
     return String(source).replace(/\D/g, '');
+  }
+
+  function normalizeTotp(totp) {
+    if (!totp) return null;
+    const remaining = Number(totp.secondsRemaining);
+    return {
+      ...totp,
+      clientExpiresAtMs: Number.isFinite(remaining)
+        ? Date.now() + Math.max(0, remaining) * 1000
+        : new Date(totp.expiresAt).getTime()
+    };
   }
 
   function setMessage(message, type) {
@@ -136,7 +148,7 @@
       state.role = result.role;
       state.boothId = result.booth_id;
       state.booth = result.booth || null;
-      state.totp = result.totp || null;
+      state.totp = normalizeTotp(result.totp);
       JSFes.setToken(JSFes.storageKeys.staffToken, result.token);
       JSFes.setToken(JSFes.storageKeys.staffRole, result.role);
       JSFes.setToken(JSFes.storageKeys.staffBoothId, result.booth_id);
@@ -148,13 +160,16 @@
   }
 
   async function loadManagerData() {
+    const requestedToken = state.token;
     const [booth, totp] = await Promise.all([
-      JSFes.apiFetch('/api/manager/booth', { token: state.token }),
-      JSFes.apiFetch('/api/manager/totp', { token: state.token })
+      JSFes.apiFetch('/api/manager/booth', { token: requestedToken }),
+      JSFes.apiFetch('/api/manager/totp', { token: requestedToken })
     ]);
 
+    if (state.token !== requestedToken) return false;
     state.booth = booth.booth;
-    state.totp = totp.totp;
+    state.totp = normalizeTotp(totp.totp);
+    return true;
   }
 
   async function renderDashboard() {
@@ -163,8 +178,9 @@
       return;
     }
 
+    const requestedToken = state.token;
     try {
-      if (!state.booth || !state.totp) await loadManagerData();
+      if ((!state.booth || !state.totp) && !(await loadManagerData())) return;
       document.body.classList.remove('staff-login-mode');
       document.body.classList.add('manager-dashboard-mode');
       updateStateLabel();
@@ -232,6 +248,7 @@
       document.getElementById('managerDashboardLogout').addEventListener('click', logoutManager);
       startTicker();
     } catch (error) {
+      if (state.token !== requestedToken) return;
       if (JSFes.isAuthError(error)) {
         clearSession();
         await renderLogin();
@@ -298,17 +315,21 @@
   }
 
   async function updateBooth(payload) {
+    const requestedToken = state.token;
+    const requestedBoothId = state.booth.booth_id;
     try {
-      const result = await JSFes.apiFetch(`/api/booths/${encodeURIComponent(state.booth.booth_id)}`, {
+      const result = await JSFes.apiFetch(`/api/booths/${encodeURIComponent(requestedBoothId)}`, {
         method: 'PATCH',
-        token: state.token,
+        token: requestedToken,
         body: payload
       });
 
+      if (state.token !== requestedToken || state.booth?.booth_id !== requestedBoothId) return;
       state.booth = result.booth;
       await renderDashboard();
       setMessage('수정사항이 반영되었습니다.', 'success');
     } catch (error) {
+      if (state.token !== requestedToken) return;
       setMessage(error.message, 'error');
     }
   }
@@ -318,14 +339,24 @@
     state.totpRefreshing = true;
     setTotpButtonBusy(true);
     stopTicker();
+    const requestedToken = state.token;
     try {
-      const result = await JSFes.apiFetch('/api/manager/totp', { token: state.token });
+      const result = await JSFes.apiFetch('/api/manager/totp', { token: requestedToken });
+      if (state.token !== requestedToken) return;
       applyTotpResult(result);
       setMessage('적립 코드가 갱신되었습니다.', 'success');
     } catch (error) {
+      if (state.token !== requestedToken) return;
+      if (JSFes.isAuthError(error) && state.token === requestedToken) {
+        clearSession();
+        renderLogin();
+        setMessage(error.message, 'error');
+        return;
+      }
       setMessage(error.message, 'error');
-      if (state.token) {
-        window.setTimeout(() => {
+      if (state.token === requestedToken) {
+        state.totpRetryTimer = window.setTimeout(() => {
+          state.totpRetryTimer = null;
           if (state.token) void refreshTotp();
         }, 5000);
       }
@@ -340,19 +371,35 @@
     state.totpRefreshing = true;
     setTotpButtonBusy(true);
     stopTicker();
+    const requestedToken = state.token;
 
     try {
       const result = await JSFes.apiFetch('/api/manager/totp', {
         method: 'POST',
-        token: state.token
+        token: requestedToken
       });
+      if (state.token !== requestedToken) return;
       applyTotpResult(result);
       setMessage('적립 코드가 재발급되었습니다.', 'success');
     } catch (error) {
+      if (state.token !== requestedToken) return;
+      if (JSFes.isAuthError(error) && state.token === requestedToken) {
+        clearSession();
+        renderLogin();
+        setMessage(error.message, 'error');
+        return;
+      }
       try {
-        const current = await JSFes.apiFetch('/api/manager/totp', { token: state.token });
+        const current = await JSFes.apiFetch('/api/manager/totp', { token: requestedToken });
+        if (state.token !== requestedToken) return;
         applyTotpResult(current);
-      } catch {
+      } catch (currentError) {
+        if (JSFes.isAuthError(currentError)) {
+          clearSession();
+          renderLogin();
+          setMessage(currentError.message, 'error');
+          return;
+        }
         startTicker();
       }
       setMessage(error.message, 'error');
@@ -363,7 +410,7 @@
   }
 
   function applyTotpResult(result) {
-    state.totp = result.totp;
+    state.totp = normalizeTotp(result.totp);
     const output = document.getElementById('totpCode');
     if (output) output.textContent = totpEntryCode();
     startTicker();
@@ -382,7 +429,10 @@
     if (!countdown || !state.totp) return;
 
     function tick() {
-      const seconds = Math.ceil((new Date(state.totp.expiresAt).getTime() - Date.now()) / 1000);
+      const expiresAtMs = Number.isFinite(state.totp.clientExpiresAtMs)
+        ? state.totp.clientExpiresAtMs
+        : new Date(state.totp.expiresAt).getTime();
+      const seconds = Math.ceil((expiresAtMs - Date.now()) / 1000);
       countdown.textContent = `갱신까지 ${JSFes.formatCountdown(seconds)}`;
       if (seconds <= 0) {
         void refreshTotp();
@@ -398,9 +448,14 @@
       window.clearInterval(state.ticker);
       state.ticker = null;
     }
+    if (state.totpRetryTimer) {
+      window.clearTimeout(state.totpRetryTimer);
+      state.totpRetryTimer = null;
+    }
   }
 
   function clearSession() {
+    stopTicker();
     state.token = null;
     state.role = null;
     state.boothId = null;

@@ -21,13 +21,17 @@
       <button type="button" data-route="/start">시작</button>
       <button type="button" data-route="/map">지도</button>
       <button type="button" data-route="/stamp">스탬프</button>
-      <button type="button" data-route="/reward">상품</button>
       <button type="button" data-route="/schedule">일정</button>
     </nav>
 
     <main id="app" class="app-container" tabindex="-1"></main>
 
     <dialog id="boothDialog" class="booth-dialog"></dialog>
+    <dialog
+      id="prizeDialog"
+      class="prize-dialog"
+      aria-labelledby="prizePopupTitle"
+      aria-describedby="prizePopupInstruction"></dialog>
 
     <script src="/js/common.js"></script>
     <script src="/js/user.js"></script>

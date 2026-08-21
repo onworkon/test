@@ -27,6 +27,6 @@ module.exports = async function handler(req, res) {
       logs: result.rows
     });
   } catch (error) {
-    handleApiError(res, error);
+    await handleApiError(res, error);
   }
 };

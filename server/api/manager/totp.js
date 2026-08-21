@@ -86,6 +86,6 @@ module.exports = async function handler(req, res) {
       totp
     });
   } catch (error) {
-    handleApiError(res, error);
+    await handleApiError(res, error);
   }
 };

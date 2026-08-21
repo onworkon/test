@@ -4,7 +4,8 @@ const { requiredSecret } = require('./_config');
 
 const STEP_SECONDS = 3600;
 const DIGITS = 4;
-const WINDOW = 1;
+const WINDOW = 0;
+const PREVIOUS_STEP_GRACE_SECONDS = 30;
 const BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 const MAX_GENERATION = 9223372036854775807n;
 
@@ -117,7 +118,7 @@ function verifyTotpCode(boothId, code, nowMs = Date.now(), generation = 0) {
   }
 
   const nowSeconds = Math.floor(nowMs / 1000);
-  const delta = speakeasy.totp.verifyDelta({
+  const verificationOptions = {
     secret: getDerivedSecret(boothId, generation),
     encoding: 'base32',
     token,
@@ -125,23 +126,41 @@ function verifyTotpCode(boothId, code, nowMs = Date.now(), generation = 0) {
     step: STEP_SECONDS,
     window: WINDOW,
     time: nowSeconds
-  });
+  };
+  const delta = speakeasy.totp.verifyDelta(verificationOptions);
 
-  if (!delta) {
-    return { valid: false };
+  if (delta) {
+    return {
+      valid: true,
+      timeStep: getCurrentStep(nowMs) + delta.delta
+    };
   }
 
-  return {
-    valid: true,
-    timeStep: getCurrentStep(nowMs) + delta.delta
-  };
+  // Allow only a short post-boundary grace period for a code submitted just before expiry.
+  if (nowSeconds % STEP_SECONDS < PREVIOUS_STEP_GRACE_SECONDS) {
+    const previousDelta = speakeasy.totp.verifyDelta({
+      ...verificationOptions,
+      time: nowSeconds - STEP_SECONDS
+    });
+    if (previousDelta) {
+      return {
+        valid: true,
+        timeStep: getCurrentStep(nowMs) - 1
+      };
+    }
+  }
+
+  return { valid: false };
 }
 
 function getReissuedCompositeTotpInfo(boothId, codeNumber, currentGeneration, nowMs = Date.now()) {
   const normalizedGeneration = normalizeGeneration(currentGeneration);
   const acceptedOldCodes = new Set();
 
-  for (let delta = -WINDOW; delta <= WINDOW; delta += 1) {
+  const earliestDelta = Math.floor(nowMs / 1000) % STEP_SECONDS < PREVIOUS_STEP_GRACE_SECONDS
+    ? -1
+    : -WINDOW;
+  for (let delta = earliestDelta; delta <= WINDOW; delta += 1) {
     const adjacentTime = nowMs + (delta * STEP_SECONDS * 1000);
     acceptedOldCodes.add(getTotpInfo(boothId, adjacentTime, normalizedGeneration).code);
   }

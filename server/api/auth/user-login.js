@@ -49,6 +49,6 @@ module.exports = async function handler(req, res) {
       user: profile
     });
   } catch (error) {
-    handleApiError(res, error);
+    await handleApiError(res, error);
   }
 };

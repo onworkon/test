@@ -1,10 +1,11 @@
 const { getAllowedOrigin } = require('./_config');
-const { captureException } = require('./_monitoring');
+const { captureException, flushMonitoring } = require('./_monitoring');
 
-const MAX_JSON_BODY_BYTES = 1024 * 1024;
+const MAX_JSON_BODY_BYTES = 16 * 1024;
 
 function setCommonHeaders(res) {
-  res.setHeader('Access-Control-Allow-Origin', getAllowedOrigin());
+  const allowedOrigin = getAllowedOrigin();
+  if (allowedOrigin) res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
   res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -34,8 +35,9 @@ function allowMethods(req, res, methods) {
   return true;
 }
 
-function sendJson(res, statusCode, payload) {
+function sendJson(res, statusCode, payload, options = {}) {
   setCommonHeaders(res);
+  if (options.cacheControl) res.setHeader('Cache-Control', options.cacheControl);
   res.statusCode = statusCode;
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.end(JSON.stringify(payload));
@@ -60,6 +62,11 @@ function httpError(statusCode, code, message) {
 }
 
 async function readJson(req) {
+  const declaredLength = Number(req.headers && req.headers['content-length']);
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_JSON_BODY_BYTES) {
+    throw httpError(413, 'BODY_TOO_LARGE', 'Request body is too large');
+  }
+
   if (Buffer.isBuffer(req.body)) {
     if (req.body.byteLength > MAX_JSON_BODY_BYTES) {
       throw httpError(413, 'BODY_TOO_LARGE', 'Request body is too large');
@@ -138,10 +145,11 @@ function getQueryParam(req, name) {
   return value;
 }
 
-function handleApiError(res, error) {
+async function handleApiError(res, error) {
   if (res.headersSent || res.writableEnded) {
     captureException(error);
     console.error(error);
+    await flushMonitoring();
     return;
   }
 
@@ -151,12 +159,14 @@ function handleApiError(res, error) {
       console.error(error);
     }
     sendError(res, error.statusCode, error.code, error.message);
+    if (error.statusCode >= 500) await flushMonitoring();
     return;
   }
 
   captureException(error);
   console.error(error);
   sendError(res, 500, 'INTERNAL_ERROR', 'Internal server error');
+  await flushMonitoring();
 }
 
 module.exports = {
