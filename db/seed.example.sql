@@ -1,5 +1,5 @@
 INSERT INTO users (uid)
-SELECT generate_series(0, 500)
+SELECT generate_series(0, 799)
 ON CONFLICT (uid) DO NOTHING;
 
 -- Sync booth data from ../booth.txt with `npm run booths:sync`.

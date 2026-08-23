@@ -1,4 +1,6 @@
 (function () {
+  const USER_UID_MAX = 799;
+
   class ApiError extends Error {
     constructor(message, code, status, payload) {
       super(message);
@@ -69,7 +71,7 @@
       item.type === 'nfc' &&
       Number.isInteger(item.uid) &&
       item.uid >= 0 &&
-      item.uid <= 500 &&
+      item.uid <= USER_UID_MAX &&
       typeof item.tag_uid === 'string' &&
       item.tag_uid.trim()
     ));
@@ -313,6 +315,7 @@
 
   const exports = {
     ApiError,
+    userUidMax: USER_UID_MAX,
     storageKeys,
     escapeHtml,
     apiFetch,

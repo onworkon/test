@@ -381,7 +381,7 @@
               inputmode="numeric"
               pattern="[0-9]*"
               min="0"
-              max="500"
+              max="${JSFes.userUidMax}"
               required
               autocomplete="off"
               placeholder="${placeholder}">
@@ -710,7 +710,7 @@
               inputmode="numeric"
               pattern="[0-9]*"
               min="0"
-              max="500"
+              max="${JSFes.userUidMax}"
               required
               autocomplete="off"
               placeholder="등록할 번호를 입력해주세요">

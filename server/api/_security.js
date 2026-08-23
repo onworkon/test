@@ -1,3 +1,6 @@
+const USER_UID_MAX = 799;
+const USER_COUNT = USER_UID_MAX + 1;
+
 function cleanText(value, maxLength = 500) {
   if (value === undefined || value === null) return '';
   return String(value)
@@ -17,7 +20,7 @@ function parseUid(value) {
   if (!/^\d{1,3}$/.test(text)) return null;
 
   const uid = Number(text);
-  return Number.isInteger(uid) && uid >= 0 && uid <= 500 ? uid : null;
+  return Number.isInteger(uid) && uid >= 0 && uid <= USER_UID_MAX ? uid : null;
 }
 
 function isValidPassword(value, minimumLength = 8) {
@@ -27,6 +30,8 @@ function isValidPassword(value, minimumLength = 8) {
 }
 
 module.exports = {
+  USER_UID_MAX,
+  USER_COUNT,
   cleanText,
   normalizeTagUid,
   parseUid,

@@ -77,6 +77,7 @@ async function main() {
       { path: '/stamp', status: 200 },
       { path: '/reward', status: 307, location: '/stamp' },
       { path: '/schedule', status: 200 },
+      { path: '/js/analytics.js', status: 200 },
       { path: '/manager', status: 200 },
       { path: '/admin', status: 200 },
       { path: '/prize', status: 200 },

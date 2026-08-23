@@ -12,7 +12,14 @@ const {
   parseCompositeTotpCode,
   verifyTotpCode
 } = require('../server/api/_totp');
-const { cleanText, isValidPassword, normalizeTagUid, parseUid } = require('../server/api/_security');
+const {
+  USER_COUNT,
+  USER_UID_MAX,
+  cleanText,
+  isValidPassword,
+  normalizeTagUid,
+  parseUid
+} = require('../server/api/_security');
 const { getAllowedOrigin, getPrizePassword, getStampRequirement, positiveIntegerEnv, requiredSecret } = require('../server/api/_config');
 const { escapeCsvCell, toCsv } = require('../server/api/_csv');
 const { exportSpecs } = require('../server/api/_export_specs');
@@ -111,9 +118,11 @@ assert.throws(
 
 assert.strictEqual(cleanText('  hello\u0000\nworld  ', 20), 'helloworld');
 assert.strictEqual(normalizeTagUid(' AA:BB-cc '), 'aabbcc');
+assert.strictEqual(USER_UID_MAX, 799);
+assert.strictEqual(USER_COUNT, 800);
 assert.strictEqual(parseUid('0'), 0);
-assert.strictEqual(parseUid('500'), 500);
-assert.strictEqual(parseUid('501'), null);
+assert.strictEqual(parseUid('799'), 799);
+assert.strictEqual(parseUid('800'), null);
 assert.strictEqual(parseUid('abc'), null);
 assert.strictEqual(parseUid('12abc'), null);
 assert.strictEqual(parseUid('1.5'), null);
@@ -472,12 +481,15 @@ function testOfflineQueueIsolation() {
   const queue = normalizeStampQueue(JSON.stringify([
     { type: 'nfc', uid: 12, tag_uid: 'tag-a' },
     { type: 'nfc', uid: 13, tag_uid: 'tag-b' },
+    { type: 'nfc', uid: 799, tag_uid: 'tag-max' },
+    { type: 'nfc', uid: 800, tag_uid: 'tag-too-high' },
     { type: 'nfc', tag_uid: 'legacy-without-user' },
     { type: 'totp', uid: 12, tag_uid: 'not-queueable' }
   ]));
   assert.deepStrictEqual(queue, [
     { type: 'nfc', uid: 12, tag_uid: 'tag-a' },
-    { type: 'nfc', uid: 13, tag_uid: 'tag-b' }
+    { type: 'nfc', uid: 13, tag_uid: 'tag-b' },
+    { type: 'nfc', uid: 799, tag_uid: 'tag-max' }
   ]);
   assert.deepStrictEqual(normalizeStampQueue('{bad json'), []);
   assert.deepStrictEqual(normalizeStampQueue({}), []);

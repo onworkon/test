@@ -1,5 +1,6 @@
 const { query } = require('./_db');
 const { getAllowedOrigin, getStampRequirement } = require('./_config');
+const { USER_COUNT } = require('./_security');
 
 function hasStrongSecret(value) {
   return typeof value === 'string' && value.length >= 32 && !value.includes('replace-');
@@ -137,7 +138,13 @@ async function getReadiness(db = { query }) {
   );
   const row = counts.rows[0];
 
-  addCheck(checks, 'users_seeded', '팔찌 사용자', row.users >= 501, `${row.users}/501`);
+  addCheck(
+    checks,
+    'users_seeded',
+    '팔찌 사용자',
+    row.users >= USER_COUNT,
+    `${row.users}/${USER_COUNT}`
+  );
   addCheck(checks, 'booths_seeded', '부스 데이터', row.booths > 0, `${row.booths}개`);
   addCheck(
     checks,
