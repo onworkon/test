@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="description" content="onworkon. About, portfolio, and contact." />
+    <title>onworkon — My space</title>
+    <link rel="icon" type="image/svg+xml" href="./assets/logo.svg" />
+    <link rel="preload" href="./assets/PPSupplyMono-Regular.otf" as="font" type="font/otf" crossorigin />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="mobile-screen" aria-label="onworkon workspace">
+      <h1 class="sr-only">My space</h1>
+      <nav class="landing-menu" aria-label="Explore my space">
+        <a class="text-link" href="./about.html">→ About on</a>
+        <a class="text-link" href="./portfolio.html">→ portfolio</a>
+        <a class="text-link" href="./contact.html">→ contact</a>
+      </nav>
+      <form class="page-navigation" aria-label="Page navigation" novalidate>
+        <label class="page-code-label">
+          <span aria-hidden="true">:</span>
+          <span class="sr-only">Page code</span>
+          <input class="page-code-input" name="page-code" type="text" value="client" maxlength="32" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" aria-describedby="page-code-help" />
+        </label>
+        <span class="sr-only" id="page-code-help">Enter home, card, work, client, about, portfolio, or contact, then press Enter to navigate.</span>
+        <p class="page-code-error" id="page-code-error" role="status" hidden></p>
+      </form>
+      <img class="brand-mark" src="./assets/logo.svg" alt="" width="54" height="40" />
+    </main>
+    <script type="module" src="./page-navigation.js"></script>
+  </body>
+</html>

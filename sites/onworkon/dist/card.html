@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#ffffff" />
+    <title>onworkon — card</title>
+    <link rel="icon" type="image/svg+xml" href="./assets/logo.svg" />
+    <link rel="preload" href="./assets/PPSupplyMono-Regular.otf" as="font" type="font/otf" crossorigin />
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./card.css" />
+    <noscript><style>.card-fallback { display: flex; }</style></noscript>
+  </head>
+  <body>
+    <main class="mobile-screen card-screen" aria-label="card">
+      <h1 class="sr-only">onworkon business card</h1>
+      <section class="card-stage" aria-label="Interactive business card">
+        <div class="card-shadow" aria-hidden="true"></div>
+        <div class="card-fallback">
+          <img src="./assets/card-front.png" alt="Front of ONWU CHOI’s business card" width="976" height="590" />
+          <img src="./assets/card-back.png" alt="Back of the business card with the onworkon logo" width="976" height="590" />
+        </div>
+        <canvas class="card-canvas" hidden tabindex="0" aria-label="Rotate business card" aria-describedby="card-instructions card-keyboard-instructions"></canvas>
+        <p class="card-hint" id="card-instructions"></p>
+      </section>
+      <span class="sr-only" id="card-keyboard-instructions">Use the arrow keys to rotate in any direction. Press R to reset.</span>
+      <form class="page-navigation" aria-label="Page navigation" novalidate>
+        <label class="page-code-label">
+          <span aria-hidden="true">:</span>
+          <span class="sr-only">Page code</span>
+          <input class="page-code-input" name="page-code" type="text" value="card" maxlength="32" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" aria-describedby="page-code-help" />
+        </label>
+        <span class="sr-only" id="page-code-help">Enter home, card, work, client, about, portfolio, or contact, then press Enter to navigate.</span>
+        <p class="page-code-error" id="page-code-error" role="status" hidden></p>
+      </form>
+      <img class="brand-mark" src="./assets/logo.svg" alt="" width="54" height="40" />
+    </main>
+    <script type="module" src="./card-loader.js"></script>
+    <script type="module" src="./page-navigation.js"></script>
+  </body>
+</html>

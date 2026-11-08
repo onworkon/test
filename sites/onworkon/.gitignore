@@ -1,0 +1,17 @@
+node_modules/
+.vercel/
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db
+*.log
+data/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+
+.vercel
+.env*.local
+
+dist/quiz/

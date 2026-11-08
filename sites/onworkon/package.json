@@ -1,0 +1,31 @@
+{
+  "name": "onworkon-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Mobile welcome page based on ui0.txt.",
+  "scripts": {
+    "dev": "node scripts/build-card.mjs && node scripts/serve.mjs",
+    "start": "node scripts/serve.mjs",
+    "build": "node scripts/build-vercel.mjs",
+    "db:migrate": "node scripts/migrate-postgres.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "quiz:build": "node quiz/scripts/build.cjs",
+    "quiz:dev": "node --env-file-if-exists=.env.local quiz/scripts/dev.cjs",
+    "quiz:test": "node --test quiz/tests/quiz.test.js",
+    "quiz:e2e": "node quiz/tests/browser.js",
+    "quiz:secrets": "node quiz/scripts/admin-secret.js"
+  },
+  "engines": {
+    "node": "22.x"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.1.0",
+    "three": "0.186.0",
+    "qrcode": "1.5.4"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "@playwright/test": "1.65.0"
+  }
+}

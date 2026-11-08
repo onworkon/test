@@ -1,0 +1,59 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "npm run quiz:build",
+  "outputDirectory": "dist",
+  "functions": {
+    "api/names.js": {
+      "maxDuration": 10
+    },
+    "api/quiz.js": {
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/quiz/:path*",
+      "destination": "/api/quiz?quizPath=:path*"
+    },
+    {
+      "source": "/quiz",
+      "destination": "/quiz/index.html"
+    },
+    {
+      "source": "/quiz/",
+      "destination": "/quiz/index.html"
+    },
+    {
+      "source": "/quiz/admin",
+      "destination": "/quiz/admin.html"
+    },
+    {
+      "source": "/quiz/admin/",
+      "destination": "/quiz/admin.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/quiz/:path*",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'"
+        }
+      ]
+    }
+  ]
+}

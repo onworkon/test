@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>퀴즈 진행자</title>
+  <link rel="stylesheet" href="/quiz/quiz.css">
+  <script src="/quiz/admin.js" defer></script>
+</head>
+<body class="quiz-page">
+  <main class="quiz-shell">
+    <header class="quiz-header"><span class="quiz-mark" aria-hidden="true">Q</span><span>익명 퀴즈<br><strong>진행자 화면</strong></span></header>
+    <p id="test-notice" class="quiz-test" hidden>현재는 테스트 문항입니다. 행사 전 실제 문항으로 교체해 주세요.</p>
+    <section id="login-panel" class="quiz-card">
+      <p class="quiz-eyebrow">HOST ACCESS</p>
+      <h1>진행자 로그인</h1>
+      <form id="login-form">
+        <label for="password" class="quiz-label">퀴즈 전용 비밀번호</label>
+        <input id="password" class="quiz-input" type="password" autocomplete="current-password" required maxlength="256">
+        <button class="quiz-button" type="submit">로그인</button>
+      </form>
+    </section>
+    <div id="dashboard" hidden>
+      <section class="quiz-card">
+        <p id="event-status" class="quiz-eyebrow"></p>
+        <h1>함께할 준비가 되었나요?</h1>
+        <img id="qr" class="quiz-qr" alt="퀴즈 참여 QR 코드" width="256" height="256">
+        <a id="join-link" class="quiz-link" target="_blank" rel="noopener"></a>
+        <dl class="quiz-counts">
+          <div><dt>참여자</dt><dd id="participants">—</dd></div>
+          <div><dt>현재 접속</dt><dd id="online">—</dd></div>
+          <div><dt>완료</dt><dd id="completed">—</dd></div>
+        </dl>
+        <p class="quiz-help">현재 접속: 최근 45초 내 통신한 참가자<br>같은 브라우저의 여러 탭은 1명으로 집계합니다.</p>
+        <div class="quiz-actions">
+          <button id="start" type="button" class="quiz-button">전체 시작</button>
+          <button id="end" type="button" class="quiz-button quiz-danger">전체 종료</button>
+        </div>
+        <p class="quiz-help">시작 후 신규 입장 제한 · 종료 후 제출 불가</p>
+      </section>
+      <section class="quiz-card" aria-labelledby="stats-heading">
+        <h2 id="stats-heading">전체 정답률</h2>
+        <div class="quiz-total"><strong id="overall-rate">—</strong><span id="overall-count">0 / 0</span></div>
+        <table class="quiz-table">
+          <caption class="quiz-sr-only">문항별 정답률과 정답 수 / 제출 답안 수</caption>
+          <thead><tr><th scope="col">문항</th><th scope="col">정답률</th><th scope="col">정답 / 제출</th></tr></thead>
+          <tbody id="question-stats"></tbody>
+        </table>
+        <p class="quiz-help">미응답 제외 · 미완료 참가자의 제출 답안 포함</p>
+      </section>
+      <button id="logout" class="quiz-text-button" type="button">로그아웃</button>
+    </div>
+    <p id="error" class="quiz-error" role="alert" hidden></p>
+    <p id="connection" class="quiz-connection" role="status"></p>
+  </main>
+</body>
+</html>

@@ -1,0 +1,343 @@
+@font-face {
+  font-family: "PP Supply Mono";
+  src: url("./assets/PPSupplyMono-Regular.otf") format("opentype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Pretendard";
+  src: url("./assets/Pretendard-Regular.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  unicode-range: U+1100-11FF, U+302E-302F, U+3130-318F, U+A960-A97F, U+AC00-D7A3, U+D7B0-D7FF, U+FFA0-FFDC;
+}
+
+:root {
+  --word-spacing: -2pt;
+  color-scheme: light;
+  font-family: "Pretendard", "PP Supply Mono", monospace;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 17px;
+  letter-spacing: -0.04em;
+  word-spacing: var(--word-spacing);
+  text-align: center;
+  color: #000;
+  background: #fff;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-width: 280px;
+  min-height: 100%;
+}
+
+body {
+  min-height: 100svh;
+}
+
+.mobile-screen {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  max-width: 480px;
+  height: 100vh;
+  height: 100svh;
+  min-height: 520px;
+  margin-inline: auto;
+  overflow: hidden;
+  background: #fff;
+  touch-action: manipulation;
+}
+
+.mobile-screen:focus-visible {
+  outline: 1px solid #bbb;
+  outline-offset: -1px;
+}
+
+.conversation {
+  position: absolute;
+  z-index: 1;
+  top: 353px;
+  inset-inline: 24px;
+}
+
+.message {
+  position: absolute;
+  inset: 0 0 auto;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: transform 500ms cubic-bezier(0.22, 1, 0.36, 1), opacity 350ms ease;
+}
+
+.message--current {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.message--previous {
+  opacity: 0.2;
+  transform: translateY(-33px);
+  pointer-events: none;
+}
+
+.message--leaving {
+  opacity: 0;
+  transform: translateY(-33px);
+  pointer-events: none;
+}
+
+.message__text {
+  display: block;
+  margin: 0;
+  overflow: hidden;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.entry-form {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: calc(0.56em + var(--word-spacing));
+  max-width: 100%;
+  margin: 0;
+  vertical-align: top;
+}
+
+.entry-form[hidden],
+.entry-input[hidden] {
+  display: none;
+}
+
+.entry-form .message__text {
+  flex: 0 0 auto;
+}
+
+.entry-measure {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: max-content;
+  visibility: hidden;
+  pointer-events: none;
+  white-space: pre;
+}
+
+.entry-input {
+  flex: 0 1 auto;
+  width: var(--entry-width, 4ch);
+  min-width: 2ch;
+  height: 44px;
+  margin-block: -13.5px;
+  padding: 13.5px 0;
+  border: 0;
+  border-radius: 0;
+  outline: none;
+  background-color: transparent;
+  background-image: linear-gradient(#a8a8a8, #a8a8a8);
+  background-position: center 30px;
+  background-repeat: no-repeat;
+  background-size: 100% 1px;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: center;
+  caret-color: #000;
+  appearance: none;
+  word-spacing: inherit;
+}
+
+.entry-input--typing {
+  width: calc(var(--entry-width, 4ch) * var(--underline-progress, 0));
+  min-width: 0;
+  pointer-events: none;
+}
+
+.entry-input:focus-visible {
+  background-image: linear-gradient(#000, #000);
+}
+
+.entry-input[aria-invalid="true"] {
+  background-image: linear-gradient(#000, #000);
+  background-size: 100% 2px;
+}
+
+.entry-input.entry-input--confirmed,
+.entry-input:disabled {
+  opacity: 1;
+  color: #000;
+  -webkit-text-fill-color: #000;
+  background-image: none;
+}
+
+.save-error {
+  margin: 12px 0 0;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: center;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.landing-menu {
+  position: absolute;
+  top: 290px;
+  left: 48px;
+  max-width: calc(100% - 96px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  font-size: 12pt;
+  line-height: 40px;
+  letter-spacing: 0;
+  text-align: left;
+}
+
+.text-link {
+  display: block;
+  width: fit-content;
+  min-height: 44px;
+  margin-inline: auto;
+  padding: 13.5px 8px;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  word-spacing: inherit;
+  text-align: center;
+  text-decoration: none;
+}
+
+.landing-menu .text-link {
+  min-height: 40px;
+  margin: 0;
+  padding: 0;
+  text-align: inherit;
+}
+
+.text-link:hover,
+.text-link:active {
+  opacity: 0.5;
+}
+
+.landing-menu .text-link:hover,
+.landing-menu .text-link:focus-visible {
+  font-weight: 400;
+  -webkit-text-stroke: 0.25px currentColor;
+  opacity: 1;
+}
+
+.text-link:focus-visible {
+  outline: 1px solid #bbb;
+  outline-offset: 2px;
+}
+
+.page-navigation {
+  position: absolute;
+  z-index: 2;
+  inset-inline: 24px;
+  bottom: max(30px, env(safe-area-inset-bottom));
+  min-height: 44px;
+  text-align: center;
+}
+
+.page-code-label {
+  display: inline-flex;
+  align-items: baseline;
+  gap: calc(0.56em + var(--word-spacing));
+  max-width: 100%;
+  min-height: 44px;
+}
+
+.page-code-input {
+  width: var(--page-code-width, 4ch);
+  min-width: 1ch;
+  max-width: min(240px, 60vw);
+  height: 44px;
+  padding: 13.5px 0;
+  border: 0;
+  border-radius: 0;
+  outline: none;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  letter-spacing: inherit;
+  word-spacing: inherit;
+  text-align: left;
+  caret-color: #000;
+  appearance: none;
+}
+
+.page-code-input:focus {
+  background-image: linear-gradient(#a8a8a8, #a8a8a8);
+  background-position: center 32px;
+  background-repeat: no-repeat;
+  background-size: 100% 1px;
+}
+
+.page-code-error {
+  position: absolute;
+  bottom: 100%;
+  inset-inline: 0;
+  margin: 0 0 8px;
+  font: inherit;
+}
+
+@media (max-height: 620px) {
+  .page-navigation {
+    bottom: max(12px, env(safe-area-inset-bottom));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .message {
+    transition: none;
+  }
+}
+
+/* 54 × 40 logo at x32, y36. */
+.brand-mark {
+  position: absolute;
+  z-index: 0;
+  top: 36px;
+  left: 32px;
+  width: 54px;
+  height: 40px;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Keep the mobile composition when it is previewed on a larger display. */
+@media (min-width: 481px) {
+  :root {
+    background: #f3f3f3;
+  }
+}

@@ -1,0 +1,14 @@
+.git/
+.openai/
+.env*
+data/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+1.png
+ui0.txt
+tests/
+node_modules/
+
+quiz/tests/
+quiz/artifacts/

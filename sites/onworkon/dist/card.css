@@ -1,0 +1,111 @@
+.card-stage {
+  --card-frame-inset: 32px;
+  --card-frame-bottom: calc(var(--card-frame-inset) + 20px);
+  --card-frame-radius: 4px;
+  position: absolute;
+  inset: 96px 0 132px;
+  min-height: 280px;
+}
+
+.card-stage::before {
+  content: "";
+  position: absolute;
+  inset: var(--card-frame-inset);
+  bottom: var(--card-frame-bottom);
+  border-radius: var(--card-frame-radius);
+  background: rgb(0 0 0 / 5%);
+  pointer-events: none;
+}
+
+.card-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  touch-action: none;
+  cursor: grab;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.card-canvas:focus-visible {
+  outline: none;
+}
+
+.card-stage:has(.card-canvas:focus-visible)::before {
+  border: 1px solid #ddd;
+}
+
+.card-canvas[hidden] {
+  display: none;
+}
+
+.card-stage--ready .card-canvas {
+  opacity: 1;
+}
+
+.card-stage--dragging .card-canvas {
+  cursor: grabbing;
+}
+
+.card-fallback {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  pointer-events: none;
+}
+
+.card-fallback img {
+  width: min(65%, 280px);
+  height: auto;
+  max-height: 43%;
+  object-fit: contain;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background: #fff;
+}
+
+.card-stage--fallback .card-fallback {
+  display: flex;
+}
+
+.card-shadow {
+  position: absolute;
+  top: calc(50% + 116px);
+  left: 50%;
+  width: 150px;
+  height: 14px;
+  border-radius: 50%;
+  background: #475059;
+  filter: blur(17px);
+  opacity: 0;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.card-stage--ready .card-shadow {
+  opacity: 0.13;
+}
+
+.card-hint {
+  position: absolute;
+  top: calc(100% - var(--card-frame-bottom) + 16px);
+  inset-inline: 24px;
+  min-height: 17px;
+  margin: 0;
+  color: #939393;
+  font: inherit;
+  font-size: calc(1rem - 2pt);
+  pointer-events: none;
+}
+
+@media (max-height: 620px) {
+  .card-stage {
+    inset-block: 96px 112px;
+  }
+}

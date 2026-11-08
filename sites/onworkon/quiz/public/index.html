@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>익명 퀴즈</title>
+  <link rel="stylesheet" href="/quiz/quiz.css">
+  <script src="/quiz/participant.js" defer></script>
+</head>
+<body class="quiz-page">
+  <main class="quiz-shell">
+    <header class="quiz-header"><span class="quiz-mark" aria-hidden="true">Q</span><span>함께 풀어보는<br><strong>익명 퀴즈</strong></span></header>
+    <p id="test-notice" class="quiz-test" hidden>현재는 테스트 문항입니다.</p>
+    <section id="stage" class="quiz-card" aria-busy="true">
+      <p class="quiz-eyebrow">WELCOME</p>
+      <h1 tabindex="-1">참가 정보를 확인하고 있어요</h1>
+      <p class="quiz-muted">잠시만 기다려 주세요.</p>
+    </section>
+    <p id="error" class="quiz-error" role="alert" hidden></p>
+    <button id="retry" class="quiz-button quiz-secondary" type="button" hidden>다시 연결</button>
+    <p id="connection" class="quiz-connection" role="status" aria-live="polite"></p>
+    <footer class="quiz-footer">이름 없이 참여해요.<br>새로고침해도 같은 브라우저에서 이어 풀 수 있어요.</footer>
+    <noscript><p class="quiz-error">퀴즈에 참여하려면 JavaScript를 켜 주세요.</p></noscript>
+  </main>
+</body>
+</html>
