@@ -20,7 +20,7 @@
   const rate = (row) => row.rate === null ? '—' : `${row.rate}%`;
   function render(stats) {
     $('#login-panel').hidden = true; $('#dashboard').hidden = false; $('#test-notice').hidden = !stats.isTest;
-    $('#event-status').textContent = { waiting: '입장 대기 중', running: '퀴즈 진행 중', ended: '퀴즈 종료' }[stats.status];
+    $('#event-status').textContent = { waiting: '대기', running: '진행 중', ended: '종료' }[stats.status];
     if (!$('#qr').getAttribute('src')) $('#qr').src = '/api/quiz/admin/qr';
     $('#join-link').href = stats.joinUrl; $('#join-link').textContent = stats.joinUrl;
     for (const key of ['participants', 'online', 'completed']) $(`#${key}`).textContent = stats[key];
@@ -37,7 +37,7 @@
       fragment.append(row);
     });
     $('#question-stats').replaceChildren(fragment);
-    $('#connection').textContent = '2초마다 갱신 · 마지막 확인 ' + new Date().toLocaleTimeString('ko-KR');
+    $('#connection').textContent = '';
   }
   async function refresh() {
     clearTimeout(timer);

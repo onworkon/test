@@ -107,7 +107,7 @@ function createHandler({ env = process.env, command } = {}) {
       }
       if (path === '/api/quiz/admin/qr') {
         const svg = await require('qrcode').toString(`${config.origin}/quiz`, { type: 'svg', margin: 4, width: 256,
-          errorCorrectionLevel: 'M' });
+          errorCorrectionLevel: 'M', color: { dark: '#201D13', light: '#FFF6DA' } });
         res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
         res.statusCode = 200;
         return res.end(svg);

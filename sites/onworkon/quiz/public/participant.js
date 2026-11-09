@@ -49,19 +49,16 @@
     stage.replaceChildren();
     stage.setAttribute('aria-busy', 'false');
     if (next.submitted === next.total) {
-      stage.append(node('div', '✓', 'quiz-symbol'), node('p', 'THANK YOU', 'quiz-eyebrow'), node('h1', '참여가 완료되었어요'),
-        node('p', '모든 답안이 저장되었습니다. 함께해 주셔서 감사합니다.', 'quiz-muted'));
+      stage.append(node('div', '✓', 'quiz-symbol'), node('h1', '참여 완료'));
     } else if (next.status === 'ended') {
-      stage.append(node('div', '✓', 'quiz-symbol'), node('h1', '퀴즈가 종료되었어요'),
-        node('p', '참여해 주셔서 감사합니다. 더 이상 답안을 제출할 수 없습니다.', 'quiz-muted'));
+      stage.append(node('div', '✓', 'quiz-symbol'), node('h1', '퀴즈 종료'));
     } else if (next.status === 'waiting') {
-      stage.append(node('div', '···', 'quiz-symbol'), node('p', 'READY WHEN YOU ARE', 'quiz-eyebrow'), node('h1', '잠시만 기다려 주세요'),
-        node('p', '참가 등록이 완료되었어요. 진행자가 시작하면 첫 번째 문제가 자동으로 열립니다.', 'quiz-muted'),
-        node('span', '총 8문항 · 내 속도대로 풀어요', 'quiz-tag'));
+      stage.append(node('div', '?', 'quiz-symbol'), node('h1', '시작을 기다려 주세요'),
+        node('p', '진행자가 시작하면 문제가 열립니다.', 'quiz-muted'));
     } else if (next.question) {
       const q = next.question;
       const progress = node('div', undefined, 'quiz-progress');
-      progress.append(node('span', '나의 진행 상황'), node('strong', `${q.id} / ${next.total}`));
+      progress.append(node('strong', `${q.id} / ${next.total}`));
       const meter = node('progress', undefined, 'quiz-meter');
       meter.max = next.total; meter.value = next.submitted; meter.setAttribute('aria-label', '저장한 문항 수');
       const heading = node('h1', q.prompt); heading.id = 'question-title';
@@ -78,7 +75,7 @@
         label.append(input, node('span', `${['①', '②', '③', '④'][index]} ${text}`));
         options.append(label);
       });
-      form.append(options, submit, node('p', '제출한 답은 수정할 수 없어요.', 'quiz-help'));
+      form.append(options, submit);
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
         if (busy) return;
@@ -100,6 +97,7 @@
       });
       stage.append(progress, meter, heading, form);
     }
+    stage.querySelector('.quiz-symbol')?.setAttribute('aria-hidden', 'true');
     const heading = stage.querySelector('h1');
     if (heading) { heading.tabIndex = -1; heading.focus({ preventScroll: true }); }
   }
@@ -117,12 +115,12 @@
       }
       render(await api('session', {}));
       if (!pendingAnswer) clearError();
-      connection.textContent = state.status === 'waiting' ? '시작 소식을 기다리고 있어요.' : '';
+      connection.textContent = '';
     } catch (error) {
       const closed = error.code === 'ADMISSION_CLOSED';
       showError(error.code ? error.message : '연결과 브라우저 저장 공간을 확인한 뒤 다시 시도해 주세요.', !closed);
       if (closed) {
-        stage.replaceChildren(node('h1', '지금은 입장할 수 없어요'), node('p', '퀴즈가 이미 시작되었거나 종료되었습니다.', 'quiz-muted'));
+        stage.replaceChildren(node('h1', '입장 마감'));
         stage.setAttribute('aria-busy', 'false');
       }
     } finally { busy = false; schedule(); }

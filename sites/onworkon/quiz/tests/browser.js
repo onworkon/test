@@ -48,12 +48,12 @@ async function main() {
     let context = await browser.newContext({ viewport: { width: 390, height: 844 } });
     let participant = await context.newPage(); track(participant);
     await participant.goto(`${env.QUIZ_ORIGIN}/quiz`);
-    await expect(participant.locator('h1')).toHaveText('잠시만 기다려 주세요', { timeout: 15000 });
+    await expect(participant.locator('h1')).toHaveText('시작을 기다려 주세요', { timeout: 15000 });
     await participant.screenshot({ path: join(artifacts, 'participant-waiting.png'), fullPage: true });
     const stored = await participant.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith('quiz:participant:')));
     assert.equal(stored.length, 1);
     await participant.reload();
-    await expect(participant.locator('h1')).toHaveText('잠시만 기다려 주세요');
+    await expect(participant.locator('h1')).toHaveText('시작을 기다려 주세요');
     await expect(host.locator('#participants')).toHaveText('1');
     await host.screenshot({ path: join(artifacts, 'host-waiting.png'), fullPage: true });
     host.once('dialog', (dialog) => dialog.accept());
@@ -101,16 +101,16 @@ async function main() {
     const lateContext = await browser.newContext();
     const late = await lateContext.newPage();
     await late.goto(`${env.QUIZ_ORIGIN}/quiz`);
-    await expect(late.locator('h1')).toHaveText('지금은 입장할 수 없어요', { timeout: 15000 });
+    await expect(late.locator('h1')).toHaveText('입장 마감', { timeout: 15000 });
     await lateContext.close();
     for (const [id, choice] of [[3, 2], [4, 3], [5, 3], [6, 1], [7, 4], [8, 1]]) {
       await expect(participant.locator('.quiz-progress strong')).toHaveText(`${id} / 8`);
       await participant.locator(`input[value="${choice}"]`).check();
       await participant.locator('form button').click();
     }
-    await expect(participant.locator('h1')).toHaveText('참여가 완료되었어요');
+    await expect(participant.locator('h1')).toHaveText('참여 완료');
     assert.doesNotMatch(await participant.locator('#stage').innerText(), /정답|점수|통계|100/);
-    await participant.reload(); await expect(participant.locator('h1')).toHaveText('참여가 완료되었어요');
+    await participant.reload(); await expect(participant.locator('h1')).toHaveText('참여 완료');
     await participant.screenshot({ path: join(artifacts, 'participant-complete.png'), fullPage: true });
     await expect(host.locator('#completed')).toHaveText('1', { timeout: 10000 });
     await expect(host.locator('#overall-rate')).toHaveText('100.0%');
@@ -125,7 +125,7 @@ async function main() {
     await participant.setViewportSize({ width: 320, height: 740 });
     assert.equal(await participant.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     host.once('dialog', (dialog) => dialog.accept()); await host.locator('#end').click();
-    await expect(host.locator('#event-status')).toHaveText('퀴즈 종료');
+    await expect(host.locator('#event-status')).toHaveText('종료');
     await expect(host.locator('#start')).toBeDisabled(); await expect(host.locator('#end')).toBeDisabled();
     await host.reload(); await expect(host.locator('#dashboard')).toBeVisible();
     await host.locator('#logout').click(); await expect(host.locator('#login-panel')).toBeVisible();
