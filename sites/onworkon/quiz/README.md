@@ -64,10 +64,8 @@ npm ci
 npm run quiz:test
 npx playwright install chromium
 npm run quiz:e2e
-npm run check
-npm run test:core
-npm run test:http
-npm run smoke
+npm test
+npm run quiz:build
 ```
 
 각 테스트는 무작위 `test-...` 행사 ID를 쓰고 자신이 만든 해당 접두어의 키만 정리한다. `FLUSHDB` 등 전체 데이터 삭제 명령을 쓰지 않는다. 브라우저 테스트는 실제 로컬 서버와 원격 Redis를 사용한다. 화면 캡처는 Git에서 제외되는 `quiz/artifacts/`에 저장한다.
@@ -93,6 +91,21 @@ npm run smoke
 통합본 동시 테스트 답안 요청 p95 약 1.90초(로컬 Node + 원격 임시 Redis). 실제 Vercel 운영 지연이나 최대 수용 인원을 보증하는 수치는 아니다. 임시 Redis는 72시간 만료 서비스이며 테스트 키는 실행 후 정리했다. 행사 운영용으로 사용하면 안 된다.
 
 실제 운영 홈페이지 통합본의 의존성 설치 검사에서는 취약점 0건이 보고되었다. 기존 홈페이지 의존성 버전은 유지했다.
+
+### 실제 Vercel 배포 검증 — 2026-11-09
+
+`onworkon/test`의 `deploy/onworkon-space` 브랜치를 Vercel `onworkon` 프로젝트에 연결했다. Root Directory는 `sites/onworkon`, 빌드 명령은 `npm run quiz:build`, 출력은 `dist`다. Production에만 여섯 `QUIZ_*` 환경변수를 설정했다. 퀴즈 전용 Upstash `onworkon-quiz-2026` Free 데이터베이스를 별도 생성했으며, Vercel 함수와 같은 N. Virginia 지역이다. 기존 Neon 연결과 데이터는 변경하지 않았다.
+
+실제 `https://onworkon.space`에서 별도 행사 `gangsong-quiz-2026-deploycheck`로 다음을 수행했다.
+
+- 70명 테스트 참가자 동시 등록. 별도로 열린 대기 탭 1명을 포함해 총 참여자 71명으로 확인했다.
+- 1,106건 중복 답안 요청이 553개 답안으로만 집계됐다. 69명 완료, 1명은 1번 오답만 제출했다. 전체 `552 / 553 = 99.8%`, 1번 `69 / 70 = 98.6%`, 나머지 문항 `69 / 69 = 100.0%`가 일치했다.
+- 시작 전 제출, 순서 건너뛰기, 제출 답 변경, 시작 후 신규 입장, 종료 후 제출과 같은 답 재전송이 모두 거부됐다. 기존 참가자의 재접속과 완료 상태 복구를 확인했다.
+- 미인증 통계·QR·제어 차단, 실제 비밀번호 로그인, Secure/HttpOnly/SameSite 쿠키, 진행자 QR와 화면 집계, 로그아웃을 확인했다. 참가자 응답에 정답·점수·통계가 없었다.
+- 퀴즈 페이지와 자산 및 CSP를 확인했고, 기존 정적 파일 24개가 배포 전과 바이트 단위로 같았다. 기존 DB API에 쓰기 요청을 보내지 않았다.
+- 이 실행의 답안 요청 p95는 875ms였다. 특정 시점의 실측치이며 모든 네트워크·인원에 대한 보증은 아니다.
+
+검증 후 본 행사 환경값을 `gangsong-quiz-2026-live`로 분리해 재배포한다. 검증용 행사는 종료된 상태로 남겨 두며 본 행사 답안에 포함되지 않는다. 본 행사 시작·종료는 진행자가 행사 때 수행한다. 이번 작업에서 운영 Redis나 검증 데이터를 삭제하지 않았다.
 
 ## 변경 경계와 행사 후 제거
 
