@@ -14,6 +14,20 @@
 .quiz-page * { box-sizing: border-box; }
 .quiz-page [hidden] { display: none !important; }
 .quiz-shell { width: min(100%, 520px); margin: 0 auto; padding: 34px 24px max(32px, env(safe-area-inset-bottom)); }
+.quiz-landing { position: relative; min-height: 100svh; min-height: 100dvh; }
+.quiz-landing-header { padding-top: 14px; text-align: center; }
+.quiz-landing-kicker { font-size: 14px; line-height: 1.6; margin: 0 0 8px; }
+.quiz-landing-title { font-size: clamp(24px, 6vw, 28px); font-weight: 700; letter-spacing: -.035em; line-height: 1.5; margin: 0; }
+.quiz-landing #stage { position: absolute; top: 50%; left: 24px; right: 24px; transform: translateY(-50%); padding: 0; margin: 0; text-align: center; }
+.quiz-page .quiz-waiting { position: relative; display: inline-block; font-size: 20px; font-weight: 500; margin: 0; }
+.quiz-wait-dots { position: absolute; left: 100%; white-space: nowrap; }
+.quiz-wait-dots span { opacity: 0; animation: quiz-wait-first 2.4s step-end infinite; }
+.quiz-wait-dots span:nth-child(2) { animation-name: quiz-wait-second; }
+.quiz-wait-dots span:nth-child(3) { animation-name: quiz-wait-third; }
+@keyframes quiz-wait-first { 0%, 100% { opacity: 0; } 25%, 99.99% { opacity: 1; } }
+@keyframes quiz-wait-second { 0%, 100% { opacity: 0; } 50%, 99.99% { opacity: 1; } }
+@keyframes quiz-wait-third { 0%, 100% { opacity: 0; } 75%, 99.99% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .quiz-wait-dots span { animation: none; opacity: 1; } }
 .quiz-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-bottom: 20px; margin: 0 0 8px; border-bottom: 1px solid var(--quiz-ink); }
 .quiz-brand { font-size: 22px; font-weight: 700; letter-spacing: -.035em; line-height: 1.4; }
 .quiz-host-label { font-size: 13px; white-space: nowrap; }

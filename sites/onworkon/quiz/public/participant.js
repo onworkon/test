@@ -19,6 +19,11 @@
     connection.textContent = '연결 상태를 확인해 주세요.';
   }
   function clearError() { errorBox.hidden = true; retry.hidden = true; }
+  function setLanding(waiting) {
+    document.querySelector('main').classList.toggle('quiz-landing', waiting);
+    document.querySelector('#landing-header').hidden = !waiting;
+    document.querySelector('#participant-header').hidden = waiting;
+  }
   async function api(path, body) {
     const response = await fetch(`/api/quiz/${path}`, {
       method: body === undefined ? 'GET' : 'POST', cache: 'no-store',
@@ -41,6 +46,7 @@
   }
   function render(next) {
     state = next;
+    setLanding(next.status === 'waiting');
     document.querySelector('#test-notice').hidden = !next.isTest;
     const key = `${next.eventId}:${next.status}:${next.submitted}`;
     if (key === viewKey) return;
@@ -53,8 +59,13 @@
     } else if (next.status === 'ended') {
       stage.append(node('h1', '퀴즈 종료'));
     } else if (next.status === 'waiting') {
-      stage.append(node('h1', '시작을 기다려 주세요'),
-        node('p', '진행자가 시작하면 문제가 열립니다.', 'quiz-muted'));
+      const waiting = node('h1', '대기중', 'quiz-waiting');
+      waiting.setAttribute('aria-label', '대기중');
+      const dots = node('span', undefined, 'quiz-wait-dots');
+      dots.setAttribute('aria-hidden', 'true');
+      dots.append(node('span', '.'), node('span', '.'), node('span', '.'));
+      waiting.append(dots);
+      stage.append(waiting);
     } else if (next.question) {
       const q = next.question;
       const progress = node('div', undefined, 'quiz-progress');
@@ -119,6 +130,7 @@
       const closed = error.code === 'ADMISSION_CLOSED';
       showError(error.code ? error.message : '연결과 브라우저 저장 공간을 확인한 뒤 다시 시도해 주세요.', !closed);
       if (closed) {
+        setLanding(false);
         stage.replaceChildren(node('h1', '입장 마감'));
         stage.setAttribute('aria-busy', 'false');
       }

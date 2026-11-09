@@ -48,12 +48,13 @@ async function main() {
     let context = await browser.newContext({ viewport: { width: 390, height: 844 } });
     let participant = await context.newPage(); track(participant);
     await participant.goto(`${env.QUIZ_ORIGIN}/quiz`);
-    await expect(participant.locator('h1')).toHaveText('시작을 기다려 주세요', { timeout: 15000 });
+    await expect(participant.locator('#stage')).toHaveAttribute('aria-busy', 'false', { timeout: 15000 });
+    await expect(participant.locator('h1')).toHaveAccessibleName('대기중', { timeout: 15000 });
     await participant.screenshot({ path: join(artifacts, 'participant-waiting.png'), fullPage: true });
     const stored = await participant.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith('quiz:participant:')));
     assert.equal(stored.length, 1);
     await participant.reload();
-    await expect(participant.locator('h1')).toHaveText('시작을 기다려 주세요');
+    await expect(participant.locator('h1')).toHaveAccessibleName('대기중');
     await expect(host.locator('#participants')).toHaveText('1');
     await host.screenshot({ path: join(artifacts, 'host-waiting.png'), fullPage: true });
     host.once('dialog', (dialog) => dialog.accept());
