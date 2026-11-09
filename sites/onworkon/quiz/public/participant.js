@@ -49,11 +49,11 @@
     stage.replaceChildren();
     stage.setAttribute('aria-busy', 'false');
     if (next.submitted === next.total) {
-      stage.append(node('div', '✓', 'quiz-symbol'), node('h1', '참여 완료'));
+      stage.append(node('h1', '참여 완료'));
     } else if (next.status === 'ended') {
-      stage.append(node('div', '✓', 'quiz-symbol'), node('h1', '퀴즈 종료'));
+      stage.append(node('h1', '퀴즈 종료'));
     } else if (next.status === 'waiting') {
-      stage.append(node('div', '?', 'quiz-symbol'), node('h1', '시작을 기다려 주세요'),
+      stage.append(node('h1', '시작을 기다려 주세요'),
         node('p', '진행자가 시작하면 문제가 열립니다.', 'quiz-muted'));
     } else if (next.question) {
       const q = next.question;
@@ -97,7 +97,6 @@
       });
       stage.append(progress, meter, heading, form);
     }
-    stage.querySelector('.quiz-symbol')?.setAttribute('aria-hidden', 'true');
     const heading = stage.querySelector('h1');
     if (heading) { heading.tabIndex = -1; heading.focus({ preventScroll: true }); }
   }
