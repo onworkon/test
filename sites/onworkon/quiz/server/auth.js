@@ -7,7 +7,7 @@ const sign = (value, config) => createHmac('sha256', config.sessionSecret)
   .update(`${config.adminHash}:${value}`).digest('base64url');
 
 async function verifyPassword(password, config) {
-  if (typeof password !== 'string' || password.length < 12 || Buffer.byteLength(password) > 256) return false;
+  if (typeof password !== 'string' || password.length < 4 || Buffer.byteLength(password) > 256) return false;
   const [, salt, hash] = config.adminHash.split('$');
   const derived = await derive(password, salt, 32);
   return timingSafeEqual(derived, Buffer.from(hash, 'hex'));

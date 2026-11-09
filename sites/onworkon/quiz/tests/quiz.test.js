@@ -4,7 +4,8 @@ const assert = require('node:assert/strict');
 const { readFileSync, readdirSync } = require('node:fs');
 const { join } = require('node:path');
 const { performance } = require('node:perf_hooks');
-const { createSession, isAdmin, cookie: makeCookie, sha256 } = require('../server/auth');
+const { randomBytes, scryptSync } = require('node:crypto');
+const { createSession, isAdmin, cookie: makeCookie, sha256, verifyPassword } = require('../server/auth');
 const { getConfig } = require('../server/config');
 const { createHandler } = require('../server/handler');
 const { harness, testEnv, newParticipant, root } = require('./helpers');
@@ -109,6 +110,23 @@ test('different concurrent answers commit only once; end races serialize before 
   assert.equal(total, answer.status === 200 ? 2 : 1);
   assert.equal((await f.request('answer', { participant, body: { questionId: 2, choice: 4 } })).data.error.code, 'ENDED');
   assert.equal((await f.admin('stats')).data.overall.submitted, total);
+});
+
+test('four-character configured administrator passwords and password rotation', async () => {
+  const hash = (password) => {
+    const salt = randomBytes(16).toString('hex');
+    return `scrypt$${salt}$${scryptSync(password, salt, 32).toString('hex')}`;
+  };
+  const oldConfig = { eventId: 'auth-test', adminHash: hash('previous-password'), sessionSecret: randomBytes(32).toString('hex') };
+  const config = { ...oldConfig, adminHash: hash('4826') };
+  assert.equal(await verifyPassword('4826', config), true);
+  for (const password of ['4827', 'previous-password', '', '482', null, 4826, 'x'.repeat(257)]) {
+    assert.equal(await verifyPassword(password, config), false);
+  }
+  const oldSession = { headers: { cookie: `quiz_admin=${createSession(oldConfig)}` } };
+  assert.equal(isAdmin(oldSession, config), false);
+  const newSession = { headers: { cookie: `quiz_admin=${createSession(config)}` } };
+  assert.equal(isAdmin(newSession, config), true);
 });
 
 test('administrator auth, cookies, CSRF, signed session expiry/rotation, rate limits and QR', async (t) => {
