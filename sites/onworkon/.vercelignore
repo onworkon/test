@@ -9,6 +9,3 @@ data/
 ui0.txt
 tests/
 node_modules/
-
-quiz/tests/
-quiz/artifacts/

@@ -13,5 +13,3 @@ data/
 
 .vercel
 .env*.local
-
-dist/quiz/

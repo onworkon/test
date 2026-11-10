@@ -86,8 +86,3 @@ npm test
 ```
 
 테스트는 별도의 임시 DB를 사용하므로 실제 방문자 DB에 테스트 이름을 남기지 않습니다.
-
-
-## Anonymous event quiz
-
-The isolated quiz is served at `/quiz`, with host access at `/quiz/admin`. See [quiz/README.md](quiz/README.md) for configuration, verification, and removal. This integration uses `npm run quiz:build` to preserve the existing site without running a database migration.
